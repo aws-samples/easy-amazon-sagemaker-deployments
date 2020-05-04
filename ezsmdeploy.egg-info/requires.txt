@@ -1,0 +1,4 @@
+sagemaker>=1.55.3
+yaspin==0.16.0
+shortuuid==1.0.1
+locustio==0.14.5
