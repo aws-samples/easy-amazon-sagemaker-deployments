@@ -48,7 +48,15 @@ The Ezsmdeploy Python SDK is built to PyPI and has the following dependencies sa
 
     pip install ezsmdeploy
 
+To install locustio for testing, do:
+
+
+::
+
+    pip install ezsmdeploy[locust]
+
 Cleanest way to install this package is within a virtualenv:
+
 
 ::
 
@@ -56,14 +64,23 @@ Cleanest way to install this package is within a virtualenv:
     
     source env/bin/activate
 
-    pip install ezsmdeploy
+    pip install ezsmdeploy[locust]
 
 
 In some cases, installs fail due to an existing package installed called "greenlet". This is not a direct dependency of ezsmdeploy but interferes with the installation. To fix this, either install in a virtualenv as seen above, or do:
 
 ::
 
-    pip install ezsmdeploy --ignore-installed greenlet
+    pip install ezsmdeploy[locust] --ignore-installed greenlet
+    
+    
+If you have another way to test the endpoint, or want to manage locust on your own, just do:
+
+::
+
+    pip install ezsmdeploy
+    
+   
 
 Key Features
 ~~~~~~~~~~~~
@@ -272,7 +289,7 @@ Sample Notebooks
 1. `Using ezsmdeploy with sklearn <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+sklearn+deployments.ipynb>`__.
 2. `Using ezsmdeploy with mxnet <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+mxnet+deployments.ipynb>`__.
 3. `Using ezsmdeploy with pytorch <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+pytorch+deployments.ipynb>`__.
-4. `Using ezsmdeploy with tesorflow <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+tensorflow+deployments.ipynb>`__.
+4. `Using ezsmdeploy with tensorflow <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+tensorflow+deployments.ipynb>`__.
 
 Known Gotchas
 ~~~~~~~~~~~~~~~~~~
