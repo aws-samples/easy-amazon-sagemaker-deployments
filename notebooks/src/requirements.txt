@@ -1,3 +1,4 @@
+pyarrow
+scikit-learn==0.22.1
 numpy
-tensorflow==1.15.2
-Pillow
+joblib

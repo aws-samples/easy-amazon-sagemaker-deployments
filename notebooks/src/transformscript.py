@@ -1,48 +1,25 @@
-import tensorflow as tf
+import sklearn
+from joblib import load
 import numpy as np
-from PIL import Image
 import os
-import json
 
 #Return loaded model
 def load_model(modelpath):
-    model_file = os.path.join(modelpath,'mobilenet_v1_1.0_224_quant.tflite')
-    model = tf.lite.Interpreter(model_path=model_file)  
-    model.allocate_tensors()
-    return model
+    print(modelpath)
+    clf = load(os.path.join(modelpath,'model.joblib'))
+    print("loaded")
+    return clf
 
 # return prediction based on loaded model (from the step above) and an input payload
 def predict(model, payload):
     try:
-        img = Image.frombytes('RGB', (224,224), payload, 'raw')# For Multi model endpoints -> [payload[0]['body'].decode()]
-        
-        #img = np.frombuffer(data, dtype=np.uint8).reshape((224, 224))
-        
-        input_details = model.get_input_details()
-        output_details = model.get_output_details()
-
-        # check the type of the input tensor
-        floating_model = input_details[0]['dtype'] == np.float32
-
-        # NxHxWxC, H:1, W:2
-        height = input_details[0]['shape'][1]
-        width = input_details[0]['shape'][2]
-        #img = Image.open(image_file).resize((width, height))
-
-        # add N dim
-        input_data = np.expand_dims(img, axis=0)
-
-        if floating_model:
-            input_data = (np.float32(input_data) - input_mean) / input_std
-
-        model.set_tensor(input_details[0]['index'], input_data)
-
-        model.invoke()
-
-        output_data = model.get_tensor(output_details[0]['index'])
-        results = np.squeeze(output_data)
-
-        out = results.tolist()
+        # locally, payload may come in as an np.ndarray
+        if type(payload)==np.ndarray:
+            out = [str(model.predict(np.frombuffer(payload).reshape((1,64))))]
+        # in remote / container based deployment, payload comes in as a stream of bytes
+        else:
+            out = [str(model.predict(np.frombuffer(payload[0]['body']).reshape((1,64))))]
     except Exception as e:
-        out = str(e)
-    return [json.dumps({'output':[out],'tfeager': tf.executing_eagerly()})]
+        out = [type(payload),str(e)] #useful for debugging!
+    
+    return out

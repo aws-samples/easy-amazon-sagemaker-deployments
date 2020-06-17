@@ -1,68 +1,53 @@
-# Build an image that can do training and inference in SageMaker
-# This is a Python 3 image that uses the nginx, gunicorn, flask stack
-# for serving inferences in a stable way.
-
 FROM ubuntu:16.04
 
+# Set a docker label to advertise multi-model support on the container
+LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
+# Set a docker label to enable container to use SAGEMAKER_BIND_TO_PORT environment variable if present
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
+
+# Install necessary dependencies for MMS and SageMaker Inference Toolkit
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     build-essential \
     ca-certificates \
     openjdk-8-jdk-headless \
     python3-dev \
-    nginx \
-    ca-certificates \
     curl \
-    wget \
     vim \
     && rm -rf /var/lib/apt/lists/* \
     && curl -O https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py
-    
 
-# Here we get all python packages.
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
 
-RUN pip3 --no-cache-dir install numpy \
-                                pandas \
-                                flask gevent gunicorn \
-                                mxnet \
+# Install MXNet, MMS, and SageMaker Inference Toolkit to set up MMS
+RUN pip3 --no-cache-dir install mxnet \
                                 multi-model-server \
                                 sagemaker-inference \
                                 retrying
 
-COPY requirements.txt /usr/local/bin/requirements.txt
+ADD . /usr/local/bin/
+
+RUN ls /usr/local/bin/
+
+#COPY requirements.txt /usr/local/bin/requirements.txt
 
 RUN pip3 install -r /usr/local/bin/requirements.txt
 
-# Set some environment variables. PYTHONUNBUFFERED keeps Python from buffering our standard
-# output stream, which means that logs can be delivered to the user quickly. PYTHONDONTWRITEBYTECODE
-# keeps Python from writing the .pyc files which are unnecessary in this case. We also update
-# PATH so that the train and serve programs are found when the container is invoked.
+# Copy entrypoint script to the image
+COPY dockerd-entrypoint.py /usr/local/bin/dockerd-entrypoint.py
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.py
 
-ENV PYTHONUNBUFFERED=TRUE
-ENV PYTHONDONTWRITEBYTECODE=TRUE
-ENV PATH="/opt/program:${PATH}"
+RUN mkdir -p /home/model-server/
 
-ADD . /opt/program/
+# Copy the default custom service file to handle incoming data and inference requests
+COPY model_handler.py /home/model-server/model_handler.py
 
-RUN ls /opt/program/
+COPY transformscript.py /home/model-server/transformscript.py
 
-# Set up the program in the image
-#COPY transformscript.py /opt/program/transformscript.py
+# Define an entrypoint script for the docker image
+ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 
-#COPY nginx.conf /opt/program/nginx.conf
-
-#COPY predictor.py /opt/program/predictor.py
-
-#COPY serve /opt/program/serve
-
-#COPY train /opt/program/train
-
-#COPY wsgi.py /opt/program/wsgi.py
-
-RUN chmod +x /opt/program/train
-
-RUN chmod +x /opt/program/serve
-
-WORKDIR /opt/program
-
+# Define command to be passed to the entrypoint
+CMD ["serve"]

@@ -286,10 +286,7 @@ Ezsmdeploy is licensed under the MIT license and uses the SageMaker Python SDK. 
 
 Sample Notebooks
 ~~~~~~~~~~~~~~~~~
-1. `Using ezsmdeploy with sklearn <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+sklearn+deployments.ipynb>`__.
-2. `Using ezsmdeploy with mxnet <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+mxnet+deployments.ipynb>`__.
-3. `Using ezsmdeploy with pytorch <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+pytorch+deployments.ipynb>`__.
-4. `Using ezsmdeploy with tensorflow <https://ezsmdeploy.s3.amazonaws.com/notebooks/Using+ezsmdeploy+for+tensorflow+deployments.ipynb>`__.
+https://github.com/aws-samples/easy-amazon-sagemaker-deployments/tree/master/notebooks
 
 Known Gotchas
 ~~~~~~~~~~~~~~~~~~
