@@ -1,4 +1,4 @@
-sagemaker==1.58.2
+sagemaker==1.60.0
 yaspin==0.16.0
 shortuuid==1.0.1
 
