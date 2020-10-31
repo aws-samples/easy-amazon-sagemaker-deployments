@@ -29,6 +29,13 @@ Ezsmdeploy - SageMaker custom deployments made easy
 
 Note for some Sagemaker estimators, deployment from pretrained models is easy; consider the Tensorflow savedmodel format. You can very easily tar your save_model.pb and variables file and use the sagemaker.tensorflow.serving.Model to register and deploy your model. Nevertheless, if your TF model is saved as checkpoints, HDF5 file, or as Tflite file, or if you have deployments needs accross multiple types of serialized model files, this may help standardize your deployment pipeline and avoid the need for building new containers for each model.
 
+V 1.x release notes
+-------------------
+1. Updated to use >v2.x of SageMaker SDK
+2. Fixed failing docker builds
+3. Tested with test notebook
+
+
 Table of Contents
 -----------------
 1. `Installing Ezsmdeploy Python SDK <#installing-the-ezsmdeploy-python-sdk>`__
@@ -345,3 +352,12 @@ Known Gotchas
 |
 
 * At the time of writing this guide, launching a multi-model server from sagemaker does not support GPUs (but the open source MMS repository has no such restrictions). Ezsmdeploy checks the number of models passed in, the instance type and other parameters to decide which stack to build for your endpoint.
+
+
+CONTRIBUTING
+------------
+
+Please submit a pull request to the packages git repo
+
+
+
