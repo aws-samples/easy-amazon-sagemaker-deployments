@@ -320,10 +320,10 @@ class Deploy(object):
             self.sagemakermodel = Model(
                 name="model-" + self.name,
                 model_data=self.modelpath[0],
-                image=self.image,
+                image_uri=self.image,
                 role=sagemaker.get_execution_role(),
                 # sagemaker_session=self.session,
-                predictor_cls=sagemaker.predictor.RealTimePredictor,
+                predictor_cls=sagemaker.predictor.Predictor,
             )
 
         else:
@@ -331,10 +331,10 @@ class Deploy(object):
             self.sagemakermodel = MultiDataModel(
                 name="model-" + self.name,
                 model_data_prefix="/".join(self.modelpath[0].split("/")[:-1]) + "/",
-                image=self.image,
+                image_uri=self.image,
                 role=sagemaker.get_execution_role(),
                 # sagemaker_session=self.session,
-                predictor_cls=sagemaker.predictor.RealTimePredictor,
+                predictor_cls=sagemaker.predictor.Predictor,
             )
 
             for path in self.modelpath:
@@ -459,23 +459,17 @@ class Deploy(object):
                 "pass in a path/to/requirements.txt or a list of requirements ['scikit-learn',...,...]"
             )
 
-    #     def build_docker(self):
-    #         cmd = 'chmod +x src/build-docker.sh  & sudo ./src/build-docker.sh {}'
-    #         p = os.popen(cmd.format(self.name)).read()
-    #         #print(output.decode())
-    #         acct = os.popen('aws sts get-caller-identity --query Account --output text').read().split('\n')[0]
-    #         region = os.popen('aws configure get region').read().split('\n')[0]
-    #         self.image = "{}.dkr.ecr.{}.amazonaws.com/ezsmdeploy-image-{}:latest".format(acct,region,self.name)
 
-    #         #container = '{}.dkr.ecr.{}.amazonaws.com/{}:latest'.format(account_id, region, 'demo-sagemaker-multimodel')
-
-    #         while not os.path.exists('src/done.txt'):
-    #             time.sleep(1)
 
     def build_docker(self):
         cmd = "chmod +x src/build-docker.sh  & sudo ./src/build-docker.sh {}"
-        p = subprocess.Popen(cmd.format(self.name), stdout=subprocess.PIPE, shell=True)
-        self.dockeroutput = p.communicate()[0].decode()
+        
+        with open('src/dockeroutput.txt', 'w') as f:
+            #print("Start process")
+            p = subprocess.Popen(cmd.format(self.name), stdout=f, shell=True)
+        
+        #print("process running in background")
+        
         acct = (
             os.popen("aws sts get-caller-identity --query Account --output text")
             .read()
@@ -488,7 +482,8 @@ class Deploy(object):
 
         while not os.path.exists("src/done.txt"):
             time.sleep(3)
-            self.dockeroutput = p.communicate()[0].decode()
+        
+        self.dockeroutput = "Please see src/dockeroutput.txt" 
 
     def autoscale_endpoint(self):
         response = boto3.client("sagemaker").describe_endpoint(

@@ -19,7 +19,7 @@ extras = {
 }
 
 setup(name='ezsmdeploy',
-      version='0.3.0',
+      version='1.0.0',
       description='SageMaker custom deployments made easy',
       url='https://pypi.python.org/pypi/ezsmdeploy',
       #scripts=['Dockerfile','dockerd-entrypoint.py','model_handler.py','build-docker.sh'],
@@ -29,7 +29,7 @@ setup(name='ezsmdeploy',
       packages=['ezsmdeploy'],
       package_data={'ezsmdeploy': ['data/*']},
       extras_require = extras,
-      install_requires=["sagemaker==1.58.2","yaspin==0.16.0","shortuuid==1.0.1"],
+      install_requires=["sagemaker==2.16.1","yaspin==0.16.0","shortuuid==1.0.1","sagemaker-studio-image-build==0.3.1", "boto3>=1.14.12"],
       zip_safe=False,
       classifiers=['Development Status :: 3 - Alpha',
                    "Intended Audience :: Developers",
