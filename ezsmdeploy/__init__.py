@@ -443,7 +443,7 @@ class Deploy(object):
             if os.path.exists(self.requirements):
                 # move file to src
 
-                shutil.move(self.requirements, "src/requirements.txt")
+                shutil.copy(self.requirements, "src/requirements.txt")
 
             else:
                 raise (self.requirements + " does not exist!")

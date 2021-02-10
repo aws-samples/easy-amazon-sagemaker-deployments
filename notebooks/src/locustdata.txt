@@ -1,1 +1,0 @@
-{"endpoint_name": "ezsmdeploy-endpoint-nmm4nf46fygso2wjeqjdrv", "target_model": "model1.tar.gz"}

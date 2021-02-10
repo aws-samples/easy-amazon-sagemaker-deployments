@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-=======
-pyarrow
-mxnet
-gluonnlp
->>>>>>> b185640d47582d52e12ce5440adb8cdfe66bbe0a
+scikit-learn==0.22.1
 numpy
-torch
 joblib
