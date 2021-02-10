@@ -1,0 +1,36 @@
+Building container ezsmdeploy-image-qrowmq9pheaol7etyxl7yh
+Building 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qrowmq9pheaol7etyxl7yh
+Creating repo for 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qrowmq9pheaol7etyxl7yh if it doesn't already exist
+Getting login for 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qrowmq9pheaol7etyxl7yh
+Login Succeeded
+Building locally
+sha256:2a7c5f08fb067bfec932814b82aa72788e1dace4b272e8b2170eb01190f95d6d
+Pushing
+The push refers to repository [497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qrowmq9pheaol7etyxl7yh]
+2d15dc173517: Preparing
+1a7a61b874d1: Preparing
+c69052435aab: Preparing
+d9c3283711ad: Preparing
+c335e385d4fd: Preparing
+d04ef8484ab4: Preparing
+fa2052bb8197: Preparing
+9f10818f1f96: Preparing
+27502392e386: Preparing
+c95d2191d777: Preparing
+9f10818f1f96: Waiting
+27502392e386: Waiting
+c95d2191d777: Waiting
+d04ef8484ab4: Waiting
+c69052435aab: Pushed
+1a7a61b874d1: Pushed
+c335e385d4fd: Pushed
+2d15dc173517: Pushed
+27502392e386: Pushed
+9f10818f1f96: Pushed
+d9c3283711ad: Pushed
+c95d2191d777: Pushed
+d04ef8484ab4: Pushed
+fa2052bb8197: Pushed
+latest: digest: sha256:5eac7b6a9648dd0c16cb123a23ddb427e3d1348f257691b99ed6d0a7f6b8cf65 size: 2411
+497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qrowmq9pheaol7etyxl7yh
+SUCCESS

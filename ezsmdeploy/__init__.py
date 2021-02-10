@@ -397,14 +397,25 @@ class Deploy(object):
         i = 1
         for name in self.model:
 
-            if "s3" in name:
+            if "tar.gz" in name and 's3' in name:
                 # download and uncompress
                 self.session.download_data(
                     path="./downloads/{}".format(i),
                     bucket=name.split("/")[2],
                     key_prefix="/".join(name.split("/")[3:]),
                 )
+                
+                with tarfile.open(
+                    glob.glob("./downloads/{}/*.tar.gz".format(i))[0]
+                ) as tar:
+                    tar.extractall("./extractedmodel/{}/".format(i))
 
+                name = "extractedmodel/{}/".format(i)
+                
+            elif 'tar.gz' in name and 's3' not in name:
+                
+                shutil.copy(name, "./downloads/{}".format(i))
+                
                 with tarfile.open(
                     glob.glob("./downloads/{}/*.tar.gz".format(i))[0]
                 ) as tar:
