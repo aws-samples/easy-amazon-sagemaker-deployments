@@ -2,7 +2,7 @@
 # This is a Python 3 image that uses the nginx, gunicorn, flask stack
 # for serving inferences in a stable way.
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
@@ -10,19 +10,20 @@ RUN apt-get update && \
     ca-certificates \
     openjdk-8-jdk-headless \
     python3-dev \
+    python3-pip \
+    python3-setuptools \
     nginx \
     ca-certificates \
     curl \
     wget \
     vim \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -O https://bootstrap.pypa.io/get-pip.py \
-    && python3 get-pip.py
+    && rm -rf /var/lib/apt/lists/* 
     
 
 # Here we get all python packages.
 
-RUN pip3 --no-cache-dir install numpy \
+RUN pip3 --no-cache-dir install setuptools \
+                                numpy \
                                 pandas \
                                 flask gevent gunicorn \
                                 mxnet \
