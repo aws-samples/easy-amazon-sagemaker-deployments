@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: ezsmdeploy
-Version: 1.0.3
+Version: 1.0.8
 Summary: SageMaker custom deployments made easy
 Home-page: https://pypi.python.org/pypi/ezsmdeploy
 Author: Shreyas Subramanian

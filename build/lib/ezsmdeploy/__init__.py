@@ -35,6 +35,7 @@ class Deploy(object):
         autoscaletarget=1000,
         wait=True,
         bucket=None,
+        prefix='',
         session=None,
         image=None,
         dockerfilepath=None,
@@ -60,6 +61,7 @@ class Deploy(object):
         self.image = image
         self.dockerfilepath = dockerfilepath
         self.ei = ei
+        self.prefix = prefix
         self.monitor = monitor
         self.deployed = False
         self.autoscaletarget = autoscaletarget
@@ -258,7 +260,13 @@ class Deploy(object):
 
     def choose_instance_type(self):
         # TO DO : add heuristic for auto selection of instance size
-        size = self.get_size(self.bucket, "ezsmdeploy/model-" + self.name + "/")
+        
+        if self.prefix =='':
+            tmppath = "ezsmdeploy/model-" + self.name + "/"
+        else:
+            tmppath = self.prefix+"/ezsmdeploy/model-" + self.name + "/"
+
+        size = self.get_size(self.bucket, tmppath )
 
         self.instancetypespath = pkg_resources.resource_filename(
             "ezsmdeploy", "data/instancetypes.csv"
@@ -346,13 +354,21 @@ class Deploy(object):
 
         if self.monitor:
             from sagemaker.model_monitor import DataCaptureConfig
-
+            
+            
+            if prefix == '':
+                tmps3uri = "s3://{}/ezsmdeploy/model-{}/datacapture".format(
+                    self.bucket, self.name
+                )
+            else:
+                tmps3uri = "s3://{}/{}/ezsmdeploy/model-{}/datacapture".format(
+                    self.bucket, self.prefix, self.name
+                )
+            
             data_capture_config = DataCaptureConfig(
                 enable_capture=True,
                 sampling_percentage=100,
-                destination_s3_uri="s3://{}/ezsmdeploy/model-{}/datacapture".format(
-                    self.bucket, self.name
-                ),
+                destination_s3_uri=tmps3uri
             )
         else:
             data_capture_config = None
@@ -381,13 +397,17 @@ class Deploy(object):
 
     def upload_model(self):
         i = 1
+        if self.prefix == '':
+            tmppath = "ezsmdeploy/model-"
+        else:
+            tmppath = self.prefix + "/ezsmdeploy/model-"
         self.modelpath = []
         for name in self.model:
             self.modelpath.append(
                 self.session.upload_data(
                     path="model{}.tar.gz".format(i),
                     bucket=self.bucket,
-                    key_prefix="ezsmdeploy/model-" + self.name,
+                    key_prefix=tmppath + self.name,
                 )
             )
             i += 1
@@ -414,7 +434,8 @@ class Deploy(object):
                 
             elif 'tar.gz' in name and 's3' not in name:
                 
-                shutil.copy(name, "./downloads/{}".format(i))
+                self.makedir_safe("./downloads/{}/".format(i))
+                shutil.copy(name, "./downloads/{}/".format(i))
                 
                 with tarfile.open(
                     glob.glob("./downloads/{}/*.tar.gz".format(i))[0]

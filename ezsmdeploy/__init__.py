@@ -261,7 +261,7 @@ class Deploy(object):
     def choose_instance_type(self):
         # TO DO : add heuristic for auto selection of instance size
         
-        if self.path =='':
+        if self.prefix =='':
             tmppath = "ezsmdeploy/model-" + self.name + "/"
         else:
             tmppath = self.prefix+"/ezsmdeploy/model-" + self.name + "/"
@@ -400,7 +400,7 @@ class Deploy(object):
         if self.prefix == '':
             tmppath = "ezsmdeploy/model-"
         else:
-            tmppath = self.path + "/ezsmdeploy/model-"
+            tmppath = self.prefix + "/ezsmdeploy/model-"
         self.modelpath = []
         for name in self.model:
             self.modelpath.append(
@@ -434,8 +434,8 @@ class Deploy(object):
                 
             elif 'tar.gz' in name and 's3' not in name:
                 
-                self.makedir_safe("downloads")
-                shutil.copy(name, "./downloads/{}".format(i))
+                self.makedir_safe("./downloads/{}/".format(i))
+                shutil.copy(name, "./downloads/{}/".format(i))
                 
                 with tarfile.open(
                     glob.glob("./downloads/{}/*.tar.gz".format(i))[0]
