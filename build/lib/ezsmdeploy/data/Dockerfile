@@ -5,6 +5,12 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 # Set a docker label to enable container to use SAGEMAKER_BIND_TO_PORT environment variable if present
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
+RUN apt -y update && apt -y upgrade && \
+    apt-get -y install curl && \
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt install nodejs -y && \
+    npm install -g @bazel/bazelisk
+    
 # Install necessary dependencies for MMS and SageMaker Inference Toolkit
 
 RUN apt-get update && \
