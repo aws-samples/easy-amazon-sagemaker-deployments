@@ -1,4 +1,0 @@
-pyarrow
-scikit-learn==0.22.1
-numpy
-joblib
