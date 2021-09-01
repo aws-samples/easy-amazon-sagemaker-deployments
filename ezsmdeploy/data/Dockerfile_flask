@@ -28,6 +28,8 @@ RUN apt-get update && \
     python3-wheel \
     && rm -rf /var/lib/apt/lists/* 
 
+RUN pip3 install --upgrade pip
+
 # Here we get all python packages.
 RUN pip3 install wheel
 
