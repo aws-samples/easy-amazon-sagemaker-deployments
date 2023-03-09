@@ -1,0 +1,11 @@
+Building container ezsmdeploy-image-r277emylietf6olrqvgbcz
+Building 266239926753.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-r277emylietf6olrqvgbcz
+Creating repo for 266239926753.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-r277emylietf6olrqvgbcz if it doesn't already exist
+Getting login for 266239926753.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-r277emylietf6olrqvgbcz
+Login Succeeded
+Building locally
+Pushing
+Using default tag: latest
+The push refers to repository [266239926753.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-r277emylietf6olrqvgbcz]
+266239926753.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-r277emylietf6olrqvgbcz
+SUCCESS
