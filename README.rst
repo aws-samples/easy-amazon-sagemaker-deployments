@@ -17,17 +17,32 @@ Ezsmdeploy - SageMaker custom deployments made easy
 .. image:: https://img.shields.io/badge/Made%20With-Love-orange.svg
    :target: https://pypi.python.org/pypi/ezsmdeploy
    :alt: Made With Love
+
+.. image:: https://img.shields.io/badge/Gen-AI-8A2BE2
+   :target: https://pypi.python.org/pypi/ezsmdeploy
+   :alt: GenAI
+   
    
 
-**Ezsmdeploy** python SDK helps you easily deploy Machine learning models and provides a rich set of features such as passing one or more model files (yes, through multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on simplifying deployment from existing models, and as such, this is for you if:
+**Ezsmdeploy** python SDK helps you easily deploy Machine learning models on SageMaker. It provides a rich set of features such as deploying models from hubs (like Huggingface or SageMaker Jumpstart), passing one or more model files (even with multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on further simplifying deployment from existing models, and as such, this is for you if:
 
-1. you have a serialized model (a pickle / joblib/ json/ TF saved model/ Pytorch .pth/ etc) file and you want to deploy and test your model as an API endpoint
-2. you have a model or multiple models stored as local files, in local folders, or in S3 as tar files (model.tar.gz)
-3. you don't want to create a custom docker container for deployment and/or don't want to deal with docker
-4. you want to make use of advanced features such as autoscaling, elastic inference, multi-model endpoints, model inference data capture, and locust.io based load testing, without any of the heavy lifting
-5. you want to still have control of how do perform inference by passing in a python script
+1.  you want to quickly deploy and try out foundational language models as an API powered by SageMaker (**New in v 2.0**)
+2.  you have a serialized model (a pickle / joblib/ json/ TF saved model/ Pytorch .pth/ etc) file and you want to deploy and test your model as an API endpoint
+3. you have a model or multiple models stored as local files, in local folders, or in S3 as tar files (model.tar.gz)
+4. you don't want to create a custom docker container for deployment and/or don't want to deal with docker
+5. you want to make use of advanced features such as autoscaling, elastic inference, multi-model endpoints, model inference data capture, and locust.io based load testing, without any of the heavy lifting
+6. you want to still have control of how do perform inference by passing in a python script
 
 Note for some Sagemaker estimators, deployment from pretrained models is easy; consider the Tensorflow savedmodel format. You can very easily tar your save_model.pb and variables file and use the sagemaker.tensorflow.serving.Model to register and deploy your model. Nevertheless, if your TF model is saved as checkpoints, HDF5 file, or as Tflite file, or if you have deployments needs accross multiple types of serialized model files, this may help standardize your deployment pipeline and avoid the need for building new containers for each model.
+
+
+
+V 2.x release notes
+-------------------
+1. Added support for SageMaker Jumpstart foundational models
+2. Added support for Huggingface hub models
+3. Added OpenChatKit support for appropriate chat models
+4. Added test notebooks for the above
 
 V 1.x release notes
 -------------------
