@@ -1,37 +1,11 @@
-Building container ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f
-Building 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f
-Creating repo for 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f if it doesn't already exist
-Getting login for 497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f
+Building container ezsmdeploy-image-5w32axxksodwprtdl3fbuj
+Building 607789152815.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-5w32axxksodwprtdl3fbuj
+Creating repo for 607789152815.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-5w32axxksodwprtdl3fbuj if it doesn't already exist
+Getting login for 607789152815.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-5w32axxksodwprtdl3fbuj
 Login Succeeded
 Building locally
-sha256:55b497fef788f028dff654862e40a7181fa46f9ec5030b05908f9cda357009db
 Pushing
-The push refers to repository [497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f]
-d303ad645501: Preparing
-22925b956a6b: Preparing
-cadeaa7edb3b: Preparing
-0cc55fbd8b5d: Preparing
-725edc1b40c6: Preparing
-c1470ccc5288: Preparing
-d0d4e2a542c3: Preparing
-9f10818f1f96: Preparing
-27502392e386: Preparing
-c95d2191d777: Preparing
-9f10818f1f96: Waiting
-d0d4e2a542c3: Waiting
-27502392e386: Waiting
-c95d2191d777: Waiting
-c1470ccc5288: Waiting
-22925b956a6b: Pushed
-d303ad645501: Pushed
-725edc1b40c6: Pushed
-cadeaa7edb3b: Pushed
-9f10818f1f96: Pushed
-27502392e386: Pushed
-0cc55fbd8b5d: Pushed
-c95d2191d777: Pushed
-c1470ccc5288: Pushed
-d0d4e2a542c3: Pushed
-latest: digest: sha256:b47b116c759400a57afceffb21a83c92493d71fe65869108d10a56be56e43465 size: 2411
-497456752804.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-hnacfh5spfwcu6ck7ksv3f
+Using default tag: latest
+The push refers to repository [607789152815.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-5w32axxksodwprtdl3fbuj]
+607789152815.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-5w32axxksodwprtdl3fbuj
 SUCCESS

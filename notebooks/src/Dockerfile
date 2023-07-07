@@ -4,6 +4,12 @@
 
 FROM ubuntu:18.04
 
+RUN apt -y update && apt -y upgrade && \
+    apt-get -y install curl && \
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt install nodejs -y && \
+    npm install -g @bazel/bazelisk
+
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     build-essential \
@@ -17,10 +23,15 @@ RUN apt-get update && \
     curl \
     wget \
     vim \
+    gcc \
+    libpq-dev \
+    python3-wheel \
     && rm -rf /var/lib/apt/lists/* 
-    
+
+RUN pip3 install --upgrade pip
 
 # Here we get all python packages.
+RUN pip3 install wheel
 
 RUN pip3 --no-cache-dir install setuptools \
                                 numpy \
@@ -48,22 +59,8 @@ ADD . /opt/program/
 
 RUN ls /opt/program/
 
-# Set up the program in the image
-#COPY transformscript.py /opt/program/transformscript.py
-
-#COPY nginx.conf /opt/program/nginx.conf
-
-#COPY predictor.py /opt/program/predictor.py
-
-#COPY serve /opt/program/serve
-
-#COPY train /opt/program/train
-
-#COPY wsgi.py /opt/program/wsgi.py
-
 RUN chmod +x /opt/program/train
 
 RUN chmod +x /opt/program/serve
 
 WORKDIR /opt/program
-
