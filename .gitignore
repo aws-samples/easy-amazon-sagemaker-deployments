@@ -5,3 +5,5 @@ dist/
 sdist/
 *egginfo*/
 *egginfo*
+ezsmdeploy.egg-info/
+ezsmdeploy.egg-info
