@@ -269,16 +269,45 @@ class Deploy(object):
         
         if self.huggingface_model_task is not None:
              hub['HF_TASK'] = self.huggingface_model_task    # NLP task you want to use for predictions
-        
-        if 'g' in self.instance_type or 'p' in self.instance_type:
-            hub['SM_NUM_GPUS']= json.dumps(1)
-        
-            if '12x' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(4)
-            elif '8x' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(4)
-            elif '16x' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(8)
+
+        try:
+            ec2_client = boto3.client("ec2")
+            resp = ec2_client.describe_instance_types(InstanceTypes=[self.instance_type.strip("ml.")])['InstanceTypes'][0]
+            if 'GpuInfo' in resp:
+                hub['SM_NUM_GPUS']= json.dumps(resp['GpuInfo']['Gpus'][0]['Count'])
+            else:
+                pass
+        except Exception as e:
+            print(e, end=" ... ")
+            print("Trying fallback to figure out number of GPUs in the instance type you chose - ")
+            hub['SM_NUM_GPUS']= json.dumps(0) # Use at least 0 GPU by default. else:
+            if 'g' in self.instance_type:
+                hub['SM_NUM_GPUS']= json.dumps(1)
+                if '12x' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(4)
+                elif '24x' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(4)
+                elif '48x' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(4)
+            elif 'p2' in self.instance_type:
+                hub['SM_NUM_GPUS']= json.dumps(1)
+                if '8x' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(8)
+                elif '16x' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(16)
+            elif 'p3' in self.instance_type:
+                hub['SM_NUM_GPUS']= json.dumps(1)
+                if '8x' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(4)
+                elif '16x' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(8)
+                elif '24x' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(8)
+            elif 'p4' in self.instance_type:
+                hub['SM_NUM_GPUS']=json.dumps(8)
+            
+                
+
                 
         if self.huggingface_model_quantize in ['bitsandbytes', 'gptq']:
             hub['HF_MODEL_QUANTIZE'] = self.huggingface_model_quantize

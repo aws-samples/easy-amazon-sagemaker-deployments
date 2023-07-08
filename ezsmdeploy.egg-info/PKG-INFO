@@ -1,3 +1,18 @@
+Metadata-Version: 2.1
+Name: ezsmdeploy
+Version: 1.8.dev0
+Summary: SageMaker custom deployments made easy
+Home-page: https://pypi.python.org/pypi/ezsmdeploy
+Author: Shreyas Subramanian
+Author-email: subshrey@amazon.com
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Provides-Extra: locust
+
 ====================================================
 Ezsmdeploy - SageMaker custom deployments made easy
 ====================================================
