@@ -58,11 +58,11 @@ V 2.x release notes
 2. Added support for Huggingface hub models
 3. Added OpenChatKit support for appropriate chat models
 4. Tested the following:
-    - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
-    - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
     - tiiuae/falcon-40b-instruct, ml.g4dn.12xlarge
     - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
-    - 
+    - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
+    - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
+    - openchat/openchat, ml.g5.2xlarge
 
 
 V 1.x release notes
