@@ -1,3 +1,18 @@
+Metadata-Version: 2.1
+Name: ezsmdeploy
+Version: 1.8.dev0
+Summary: SageMaker custom deployments made easy
+Home-page: https://pypi.python.org/pypi/ezsmdeploy
+Author: Shreyas Subramanian
+Author-email: subshrey@amazon.com
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Provides-Extra: locust
+
 ====================================================
 Ezsmdeploy - SageMaker custom deployments made easy
 ====================================================
@@ -43,11 +58,11 @@ V 2.x release notes
 2. Added support for Huggingface hub models
 3. Added OpenChatKit support for appropriate chat models
 4. Tested the following:
-    - tiiuae/falcon-40b-instruct, ml.g4dn.12xlarge
-    - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
-    - openchat/openchat, ml.g5.2xlarge
+    - tiiuae/falcon-40b-instruct, ml.g4dn.12xlarge
+    - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
+    - 
 
 
 V 1.x release notes

@@ -1074,18 +1074,18 @@ class Deploy(object):
             return self.predictor
         
     def chat(self):
-        if self.foundation_model and 'chat' in self.model or 'Chat' in self.model :
-            OpenChatKitShell(
-                predictor=self.predictor,
-                model_name = self.model,
-                max_new_tokens=128,
-                do_sample=True,
-                temperature=0.6,
-                top_k=40
-            ).cmdloop()
+        # if self.foundation_model and 'chat' in self.model or 'Chat' in self.model :
+        OpenChatKitShell(
+            predictor=self.predictor,
+            model_name = self.model,
+            max_new_tokens=128,
+            do_sample=True,
+            temperature=0.6,
+            top_k=40
+        ).cmdloop()
         
-        else:
-            print("Sorry, you can only use the chat functionality with gpt-neoxt-chat-base-20b or the RedPajama chat models for now")
+        # else:
+        #     print("Sorry, you can only use the chat functionality with gpt-neoxt-chat-base-20b or the RedPajama chat models for now")
 
 
 
@@ -1177,7 +1177,7 @@ class OpenChatKitShell(cmd.Cmd):
             payload = {"text_inputs": prompt, **self.payload_kwargs}
             response = self.predictor.predict(payload)
             output = response[0][0]["generated_text"][len(prompt) :]
-        elif '-Chat' in self.model: #for RedPajama chat models
+        elif '-Chat' in self.model or 'chat' in self.model: #for RedPajama chat models, experimental for other chat models like openchat/openchat
             
             payload = {"inputs":prompt,
            "parameters":{"max_new_tokens":100}}
