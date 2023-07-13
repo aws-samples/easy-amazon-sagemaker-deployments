@@ -13,6 +13,7 @@ import shutil
 import pkg_resources
 import subprocess
 from sagemaker.multidatamodel import MultiDataModel
+from sagemaker.serverless import ServerlessInferenceConfig
 from sagemaker.model import Model
 import ast
 import csv
@@ -58,6 +59,9 @@ class Deploy(object):
         name=None,
         autoscale=False,
         autoscaletarget=1000,
+        serverless=False,
+        serverless_memory=4096,
+        serverless_concurrency=100,
         wait=True,
         bucket=None,
         prefix='',
@@ -99,7 +103,14 @@ class Deploy(object):
         self.foundation_model_version = foundation_model_version
         self.huggingface_model = huggingface_model
         self.huggingface_model_task = huggingface_model_task
+        self.serverless = serverless
         
+        if serverless:
+            self.serverless_config = ServerlessInferenceConfig(
+                memory_size_in_mb=serverless_memory, max_concurrency=serverless_concurrency)
+        else:
+            self.serverless_config = None
+            
         self.huggingface_model_quantize = huggingface_model_quantize
 
         # ------ load cost types dict ---------
@@ -255,7 +266,7 @@ class Deploy(object):
     
     def deploy_huggingface_model(self):
         
-        if self.instance_type == None:
+        if self.instance_type == None and not self.serverless:
             raise ValueError("Please enter a valid instance type, not [None]")
         
         # from sagemaker.huggingface.model import HuggingFaceModel, get_huggingface_llm_image_uri
@@ -269,53 +280,54 @@ class Deploy(object):
         
         if self.huggingface_model_task is not None:
              hub['HF_TASK'] = self.huggingface_model_task    # NLP task you want to use for predictions
-
-        try:
-            ec2_client = boto3.client("ec2")
-            resp = ec2_client.describe_instance_types(InstanceTypes=[self.instance_type.strip("ml.")])['InstanceTypes'][0]
-            if 'GpuInfo' in resp:
-                hub['SM_NUM_GPUS']= json.dumps(resp['GpuInfo']['Gpus'][0]['Count'])
-            else:
-                pass
-        except Exception as e:
-            print(e, end=" ... ")
-            print("Trying fallback to figure out number of GPUs in the instance type you chose - ")
-            hub['SM_NUM_GPUS']= json.dumps(0) # Use at least 0 GPU by default. else:
-            if 'g' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(1)
-                if '12x' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(4)
-                elif '24x' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(4)
-                elif '48x' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(4)
-            elif 'p2' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(1)
-                if '8x' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(8)
-                elif '16x' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(16)
-            elif 'p3' in self.instance_type:
-                hub['SM_NUM_GPUS']= json.dumps(1)
-                if '8x' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(4)
-                elif '16x' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(8)
-                elif '24x' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(8)
-            elif 'p4' in self.instance_type:
-                hub['SM_NUM_GPUS']=json.dumps(8)
-            
-                
-
-                
-        if self.huggingface_model_quantize in ['bitsandbytes', 'gptq']:
-            hub['HF_MODEL_QUANTIZE'] = self.huggingface_model_quantize
-        elif self.huggingface_model_quantize==None:
-            pass
-        else:
-            raise ValueError(f"huggingface_model_quantize needs to be one of bitsandbytes, gptq, not {self.huggingface_model_quantize}")
         
+        if not self.serverless: #ignore instance type checks, and ignore fallback. Also ignore quantization
+            try:
+                ec2_client = boto3.client("ec2")
+                resp = ec2_client.describe_instance_types(InstanceTypes=[self.instance_type.strip("ml.")])['InstanceTypes'][0]
+                if 'GpuInfo' in resp:
+                    hub['SM_NUM_GPUS']= json.dumps(resp['GpuInfo']['Gpus'][0]['Count'])
+                else:
+                    pass
+            except Exception as e:
+                print(e, end=" ... ")
+                print("Trying fallback to figure out number of GPUs in the instance type you chose - ")
+                hub['SM_NUM_GPUS']= json.dumps(0) # Use at least 0 GPU by default. else:
+                if 'g' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(1)
+                    if '12x' in self.instance_type:
+                        hub['SM_NUM_GPUS']= json.dumps(4)
+                    elif '24x' in self.instance_type:
+                        hub['SM_NUM_GPUS']= json.dumps(4)
+                    elif '48x' in self.instance_type:
+                        hub['SM_NUM_GPUS']= json.dumps(4)
+                elif 'p2' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(1)
+                    if '8x' in self.instance_type:
+                        hub['SM_NUM_GPUS']=json.dumps(8)
+                    elif '16x' in self.instance_type:
+                        hub['SM_NUM_GPUS']=json.dumps(16)
+                elif 'p3' in self.instance_type:
+                    hub['SM_NUM_GPUS']= json.dumps(1)
+                    if '8x' in self.instance_type:
+                        hub['SM_NUM_GPUS']=json.dumps(4)
+                    elif '16x' in self.instance_type:
+                        hub['SM_NUM_GPUS']=json.dumps(8)
+                    elif '24x' in self.instance_type:
+                        hub['SM_NUM_GPUS']=json.dumps(8)
+                elif 'p4' in self.instance_type:
+                    hub['SM_NUM_GPUS']=json.dumps(8)
+
+
+
+
+            if self.huggingface_model_quantize in ['bitsandbytes', 'gptq']:
+                hub['HF_MODEL_QUANTIZE'] = self.huggingface_model_quantize
+            elif self.huggingface_model_quantize==None:
+                pass
+            else:
+                raise ValueError(f"huggingface_model_quantize needs to be one of bitsandbytes, gptq, not {self.huggingface_model_quantize}")
+
         
         
         aws_role = sagemaker.get_execution_role()
@@ -577,28 +589,38 @@ class Deploy(object):
             )
         else:
             data_capture_config = None
-
+        
+        if self.instance_type is not None:
+                if "p3" in self.instance_type or "16x" in self.instance_type or "24x" in self.instance_type or "48x" in self.instance_type or self.foundation_model:
+                    volume_size = 256 
+                else:
+                    volume_size = None
+        else:
+            volume_size = None 
+            
+        
         if self.foundation_model:
             # deploy the Model. Note that we need to pass Predictor class when we deploy model through Model class,
             # for being able to run inference through the sagemaker API.
-            volume_size = 256 if "p3" in self.instance_type else None
-            
+
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 predictor_cls=sagemaker.predictor.Predictor,
                 endpoint_name="ezsm-foundation-endpoint-" + self.name,
                 volume_size=volume_size,
+                # serverless_inference_config=self.serverless_config, #ignoring serverless inference
                 wait=self.wait
             )
         elif self.huggingface_model:
-            volume_size = 256 if "p3" in self.instance_type else None
+            
             
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 endpoint_name="ezsm-hf-endpoint-" + self.name,
                 volume_size=volume_size,
+                serverless_inference_config=self.serverless_config,
                 wait=self.wait,
                 container_startup_health_check_timeout=300,
             )
@@ -612,7 +634,9 @@ class Deploy(object):
                 endpoint_name="ezsm-endpoint-" + self.name,
                 update_endpoint=False,
                 wait=self.wait,
+                volume_size=volume_size,
                 data_capture_config=data_capture_config,
+                serverless_inference_config=self.serverless_config,
                 container_startup_health_check_timeout=300,
             )
 
@@ -1009,11 +1033,18 @@ class Deploy(object):
                     raise ValueError("Did not find model artifact, or foundation/huggingface model")
                 
             sp.hide()
-            sp.write(
-                str(datetime.datetime.now() - start)
-                + " | created model(s). Now deploying on "
-                + self.instance_type
-            )
+            
+            if not self.serverless:
+                sp.write(
+                    str(datetime.datetime.now() - start)
+                    + " | created model(s). Now deploying on "
+                    + self.instance_type
+                )
+            else:
+                sp.write(
+                    str(datetime.datetime.now() - start)
+                    + " | created model(s). Now deploying on Serverless!"
+                )
             sp.show()
 
             # deploy model

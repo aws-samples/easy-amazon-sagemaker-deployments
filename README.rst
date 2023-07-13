@@ -47,8 +47,8 @@ V 2.x release notes
     - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
-    - openchat/openchat, ml.g5.2xlarge
-
+    - bigscience/bloomz, ml.g5.8xlarge
+    - bigcode/starcode, ml.g5.4xlarge
 
 V 1.x release notes
 -------------------
