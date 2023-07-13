@@ -45,9 +45,11 @@ V 2.x release notes
 4. Tested the following:
     - tiiuae/falcon-40b-instruct, ml.g4dn.12xlarge
     - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
+    - WizardLM/WizardLM-7B-V1.0", ml.g5.16xlarge
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
-    - openchat/openchat, ml.g5.2xlarge
+    - openchat/openchat, ml.g5.24xlarge
+    - 
 
 
 V 1.x release notes
