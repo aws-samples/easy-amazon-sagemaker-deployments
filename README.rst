@@ -292,7 +292,14 @@ Note that when using the Multi model mode, the payload comes in as a dictionary 
 Large Language models
 ~~~~~~~~~~~~~~~~~~~~~
 
-EzSMDeploy supports deploying foundation models through Jumpstart as well as huggingface:
+EzSMDeploy supports deploying foundation models through Jumpstart as well as huggingface. Genreral guidance:
+
+
+1. Jumpstart models - `foundation_model=True`
+2. Large huggingface models - `foundation_model=True, huggingface_model=True`
+3. Small huggingface models - `huggingface_model=True`
+4. Tiny models - `serverless=True`
+
 
 To deploy models using Jumpstart:
 
