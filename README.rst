@@ -49,6 +49,7 @@ V 2.x release notes
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
     - openchat/openchat, ml.g5.24xlarge
+    - facebook/galactica-6.7b, ml.g5.16xlarge
 
 
 V 1.x release notes

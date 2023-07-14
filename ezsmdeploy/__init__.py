@@ -600,10 +600,13 @@ class Deploy(object):
             data_capture_config = None
         
         if self.instance_type is not None:
-                if "p3" in self.instance_type or "16x" in self.instance_type or "24x" in self.instance_type or "48x" in self.instance_type or self.foundation_model:
-                    volume_size = 256 
-                else:
-                    volume_size = None
+            volume_size = None
+            if "p3" in self.instance_type or "p4" in self.instance_type or "16x" in self.instance_type or "24x" in self.instance_type or "48x" in self.instance_type or self.foundation_model:
+                volume_size = 256 
+            
+            if "g5" in self.instance_type:
+                volume_size = None
+                    
         else:
             volume_size = None 
             
@@ -1045,7 +1048,7 @@ class Deploy(object):
                 # create sagemaker model
                 self.create_model()
             else:
-                if self.foundation_model:
+                if self.foundation_model and not self.huggingface_model:
                     self.deploy_foundation_model()
                 elif self.huggingface_model:
                     self.deploy_huggingface_model()
