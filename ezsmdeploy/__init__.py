@@ -61,7 +61,7 @@ class Deploy(object):
         autoscaletarget=1000,
         serverless=False,
         serverless_memory=4096,
-        serverless_concurrency=100,
+        serverless_concurrency=10,
         wait=True,
         bucket=None,
         prefix='',
@@ -334,18 +334,27 @@ class Deploy(object):
         endpoint_name = name="hf-model-" + self.name
         
         # create Hugging Face Model Class
-        self.sagemakermodel = HuggingFaceModel(
-           image_uri=get_huggingface_llm_image_uri("huggingface"),
-           env=hub,                                                # configuration for loading model from Hub
-           role=aws_role,                                          # IAM role with permissions to create an endpoint
-           name=endpoint_name,
-           transformers_version="4.26",                             # Transformers version used
-           pytorch_version="1.13",                                  # PyTorch version used
-           py_version='py39',                                      # Python version used
-        )
+        if not self.serverless and self.foundation_model and self.huggingface_model: #Basically just for large models
+            self.sagemakermodel = HuggingFaceModel(
+               image_uri=get_huggingface_llm_image_uri("huggingface"),
+               env=hub,                                                # configuration for loading model from Hub
+               role=aws_role,                                          # IAM role with permissions to create an endpoint
+               name=endpoint_name,
+               transformers_version="4.26",                             # Transformers version used
+               pytorch_version="1.13",                                  # PyTorch version used
+               py_version='py39',                                      # Python version used
+            )
+        else:
+            self.sagemakermodel = HuggingFaceModel(
+                env=hub,                      # configuration for loading model from Hub
+                role=aws_role,                    # iam role with permissions to create an Endpoint
+                transformers_version="4.26",  # transformers version used
+                pytorch_version="1.13",        # pytorch version used
+                py_version='py39',            # python version used
+                )
     
     def deploy_foundation_model(self):
-        # print("start")
+        # Assume foundation model on Jumpstart here
 
         
         from sagemaker import image_uris, instance_types, model_uris, script_uris
@@ -599,7 +608,7 @@ class Deploy(object):
             volume_size = None 
             
         
-        if self.foundation_model:
+        if self.foundation_model and not self.huggingface_model:
             # deploy the Model. Note that we need to pass Predictor class when we deploy model through Model class,
             # for being able to run inference through the sagemaker API.
 
@@ -612,7 +621,19 @@ class Deploy(object):
                 # serverless_inference_config=self.serverless_config, #ignoring serverless inference
                 wait=self.wait
             )
-        elif self.huggingface_model:
+        elif self.foundation_model and self.huggingface_model:
+            
+            
+            self.predictor = self.sagemakermodel.deploy(
+                initial_instance_count=self.instance_count,
+                instance_type=self.instance_type,
+                endpoint_name="ezsm-hf-endpoint-" + self.name,
+                volume_size=volume_size,
+                wait=self.wait,
+                container_startup_health_check_timeout=300,
+            )
+            
+        elif self.huggingface_model and not self.foundation_model:
             
             
             self.predictor = self.sagemakermodel.deploy(
@@ -621,8 +642,7 @@ class Deploy(object):
                 endpoint_name="ezsm-hf-endpoint-" + self.name,
                 volume_size=volume_size,
                 serverless_inference_config=self.serverless_config,
-                wait=self.wait,
-                container_startup_health_check_timeout=300,
+                wait=self.wait
             )
                 
             

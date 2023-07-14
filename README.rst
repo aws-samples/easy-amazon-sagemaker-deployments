@@ -49,7 +49,6 @@ V 2.x release notes
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
     - openchat/openchat, ml.g5.24xlarge
-    - new model
 
 
 V 1.x release notes
@@ -287,6 +286,65 @@ Make sure your model script has a load_model() and predict() function. While you
 
 
 Note that when using the Multi model mode, the payload comes in as a dictionary and the raw bytes sent in can be accessed using payload[0]['body']; In flask based deployments, you can just use payload as it is (comes in as bytes)
+
+
+Large Language models
+~~~~~~~~~~~~~~~~~~~~~
+
+EzSMDeploy supports deploying foundation models through Jumpstart as well as huggingface:
+
+To deploy models using Jumpstart:
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "huggingface-text2text-flan-ul2-bf16",
+                               foundation_model=True)
+                               
+Note that with Jumpstart models, we can automatically retrieve default/suggested instances from SageMaker                               
+
+
+
+To deploy a huggingface LLM model (this uses the huggingface llm container):
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "tiiuae/falcon-40b-instruct",
+                               foundation_model=True,
+                               huggingface_model=True,
+                               huggingface_model_task='text-generation',
+                               instance_type="ml.g4dn.12xlarge"
+                               )
+                               
+(See release notes for models we have tested so far with instances that worked)
+
+Note that at the time of writing this, officially supported model architectures for LLMs on Huggingface are currently:
+
+    - BLOOM / BLOOMZ
+    - MT0-XXL
+    - Galactica
+    - SantaCoder
+    - GPT-Neox 20B (joi, pythia, lotus, rosey, chip, RedPajama, open assistant)
+    - FLAN-T5-XXL (T5-11B)
+    - Llama (vicuna, alpaca, koala)
+    - Starcoder / SantaCoder
+    - Falcon 7B / Falcon 40B
+
+
+
+
+
+Serverless inference
+~~~~~~~~~~~~~~~~~~~~
+
+Simply do `serverless=True`. Make sure you size your serverless endpoint correctly using `serverless_memory` and `serverless_concurrency`. You can combine other features as well, for example, to deploy a huggingface model on serverless use:
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "distilbert-base-uncased-finetuned-sst-2-english",
+                               huggingface_model=True,
+                               huggingface_model_task='text-classification',
+                               serverless=True
+                               )
 
 
 Supported Operating Systems
