@@ -47,9 +47,14 @@ V 2.x release notes
     - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
     - WizardLM/WizardLM-7B-V1.0", ml.g5.16xlarge
     - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
+    - TheBloke/dromedary-65b-lora-HF, ml.g4dn.4xlarge
     - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
     - openchat/openchat, ml.g5.24xlarge
     - facebook/galactica-6.7b, ml.g5.16xlarge
+    - CalderaAI/30B-Lazarus, ml.g5.16xlarge
+    - huggyllama/llama-65b, ml.g5.16xlarge
+    - ausboss/llama-30b-supercot, ml.g4dn.4xlarge
+    - MetaIX/GPT4-X-Alpasta-30b, ml.g4dn.4xlarge
 
 
 V 1.x release notes
