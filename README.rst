@@ -55,6 +55,8 @@ V 2.x release notes
     - huggyllama/llama-65b, ml.g5.16xlarge
     - ausboss/llama-30b-supercot, ml.g4dn.4xlarge
     - MetaIX/GPT4-X-Alpasta-30b, ml.g4dn.4xlarge
+    - 
+    - Also tried several small/tiny models from huggingface on Serverless - (distilbert / dynamic-tinybert / deepset/tinyroberta-squad2 / facebook/detr-resnet-50) 
 
 
 V 1.x release notes
