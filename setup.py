@@ -19,7 +19,7 @@ extras = {
 }
 
 setup(name='ezsmdeploy',
-      version='1.95dev',
+      version='1.96dev',
       description='SageMaker custom deployments made easy',
       url='https://pypi.python.org/pypi/ezsmdeploy',
       #scripts=['Dockerfile','dockerd-entrypoint.py','model_handler.py','build-docker.sh'],
