@@ -404,18 +404,12 @@ class Deploy(object):
                 env=_model_env_variable_map[self.model],
             )
         else:
-            self.makedir_safe("src")
+            from sagemaker.jumpstart.model import JumpStartModel
             
-            self.sagemakermodel = sagemaker.model.Model(
-                image_uri=deploy_image_uri,
-                source_dir=deploy_source_uri,
-                model_data=model_uri,
-                entry_point="inference.py",  # entry point file in source_dir and present in deploy_source_uri
-                role=aws_role,
-                predictor_cls=sagemaker.predictor.Predictor,
-                name=endpoint_name,
-                sagemaker_session=self.get_sagemaker_session('src')
-            )
+            self.sagemakermodel =  JumpStartModel(model_id = self.model,
+                                             model_version = self.foundation_model_version,
+                                             role=aws_role)
+
             
     def get_sagemaker_session(self,local_download_dir='src') -> sagemaker.Session:
         """Return the SageMaker session."""
@@ -618,7 +612,7 @@ class Deploy(object):
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
-                predictor_cls=sagemaker.predictor.Predictor,
+                # predictor_cls=sagemaker.predictor.Predictor, # Have to remove this since the new JumpstartModel SDK fails
                 endpoint_name="ezsm-foundation-endpoint-" + self.name,
                 volume_size=volume_size,
                 # serverless_inference_config=self.serverless_config, #ignoring serverless inference
