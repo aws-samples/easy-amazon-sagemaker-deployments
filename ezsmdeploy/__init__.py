@@ -118,6 +118,14 @@ class Deploy(object):
         self.huggingface_model_task = huggingface_model_task
         self.serverless = serverless
 
+        if self.foundation_model:
+            self.ezsm_model_name = "ezsm-foundation-endpoint-" + self.name
+        else:
+            self.ezsm_model_name = "ezsm-endpoint-" + self.name
+
+        if self.huggingface_model:
+            self.ezsm_model_name = "ezsm-hf-endpoint-" + self.name
+
         if serverless:
             self.serverless_config = ServerlessInferenceConfig(
                 memory_size_in_mb=serverless_memory,
@@ -647,7 +655,7 @@ class Deploy(object):
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 # predictor_cls=sagemaker.predictor.Predictor, # Have to remove this since the new JumpstartModel SDK fails
-                endpoint_name="ezsm-foundation-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 # serverless_inference_config=self.serverless_config, #ignoring serverless inference
                 wait=self.wait,
@@ -656,7 +664,7 @@ class Deploy(object):
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
-                endpoint_name="ezsm-hf-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 wait=self.wait,
                 container_startup_health_check_timeout=300,
@@ -666,7 +674,7 @@ class Deploy(object):
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
-                endpoint_name="ezsm-hf-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 serverless_inference_config=self.serverless_config,
                 wait=self.wait,
@@ -677,7 +685,7 @@ class Deploy(object):
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 accelerator_type=self.ei,
-                endpoint_name="ezsm-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 update_endpoint=False,
                 wait=self.wait,
                 volume_size=volume_size,
@@ -686,7 +694,7 @@ class Deploy(object):
                 container_startup_health_check_timeout=300,
             )
 
-        self.endpoint_name = "ezsm-endpoint-" + self.name
+        self.endpoint_name = self.ezsm_model_name
 
     def get_size(self, bucket, path):
         s3 = boto3.resource("s3")
