@@ -1,15 +1,12 @@
+import os
+
+import numpy as np
 import torch
-import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
-from joblib import load
-import numpy as np
-import os
-import json
-from six import BytesIO
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -28,30 +25,32 @@ class Net(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
-    
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#Return loaded model
+
+# Return loaded model
 def load_model(modelpath):
     model = torch.nn.DataParallel(Net())
-    with open(os.path.join(modelpath, 'model.pth'), 'rb') as f:
+    with open(os.path.join(modelpath, "model.pth"), "rb") as f:
         model.load_state_dict(torch.load(f))
     print("loaded")
     return model.to(device)
 
+
 # return prediction based on loaded model (from the step above) and an input payload
 def predict(model, payload):
-    
     if type(payload) == list:
-        data = np.frombuffer(payload[0]['body'],dtype=np.float32).reshape(1,1,28,28)
+        data = np.frombuffer(payload[0]["body"], dtype=np.float32).reshape(1, 1, 28, 28)
     elif type(payload) == np.ndarray:
-        data = payload  
+        data = payload
     try:
         print(type(data))
         input_data = torch.Tensor(data)
         model.eval()
         with torch.no_grad():
-            out =  model(input_data.to(device)).argmax(axis=1)[0].tolist()
+            out = model(input_data.to(device)).argmax(axis=1)[0].tolist()
     except Exception as e:
         out = str(e)
     return [out]

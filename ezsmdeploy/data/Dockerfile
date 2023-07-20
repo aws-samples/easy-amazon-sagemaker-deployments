@@ -10,7 +10,7 @@ RUN apt -y update && apt -y upgrade && \
     curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
     apt install nodejs -y && \
     npm install -g @bazel/bazelisk
-    
+
 # Install necessary dependencies for MMS and SageMaker Inference Toolkit
 
 RUN apt-get update && \
@@ -26,7 +26,7 @@ RUN apt-get update && \
     curl \
     wget \
     vim \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -V
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1

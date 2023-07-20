@@ -1,12 +1,13 @@
 import re
 import time
 
-MEANINGLESS_WORDS = ['<pad>', '</s>', '<|endoftext|>']
+MEANINGLESS_WORDS = ["<pad>", "</s>", "<|endoftext|>"]
 PRE_PROMPT = """\
 Current Date: {}
 Current Time: {}
 
 """
+
 
 def clean_response(response):
     for word in MEANINGLESS_WORDS:
@@ -14,10 +15,11 @@ def clean_response(response):
     response = response.strip("\n")
     return response
 
+
 class Conversation:
     def __init__(self, human_id, bot_id):
-        cur_date = time.strftime('%Y-%m-%d')
-        cur_time = time.strftime('%H:%M:%S %p %Z')
+        cur_date = time.strftime("%Y-%m-%d")
+        cur_time = time.strftime("%H:%M:%S %p %Z")
 
         self._human_id = human_id
         self._bot_id = bot_id
@@ -52,4 +54,4 @@ class Conversation:
 
     @classmethod
     def from_raw_prompt(cls, value):
-        self._prompt = value
+        cls._prompt = value

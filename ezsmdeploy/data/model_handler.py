@@ -1,13 +1,8 @@
 """
 ModelHandler defines an example model handler for load and inference requests
 """
-from collections import namedtuple
-import glob
-import json
-import logging
-import os
-import re
-from transformscript import *
+
+from transformscript import load_model, predict
 
 
 class ModelHandler(object):
@@ -29,7 +24,7 @@ class ModelHandler(object):
         properties = context.system_properties
         # Contains the url parameter passed to the load request
         model_dir = properties.get("model_dir")
-        gpu_id = properties.get("gpu_id")
+        properties.get("gpu_id")
 
         try:
             # Load model

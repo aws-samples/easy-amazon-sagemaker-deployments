@@ -1,28 +1,30 @@
+import ast
+import cmd
+import csv
+import datetime
+import glob
+import json
+import os
+import pickle
+import re
+import shutil
+import subprocess
+import tarfile
+import time
+from typing import List, Optional
+
+import boto3
+import pkg_resources
 import sagemaker
 import shortuuid
+from sagemaker.model import Model
+from sagemaker.multidatamodel import MultiDataModel
+from sagemaker.predictor import Predictor
+from sagemaker.serverless import ServerlessInferenceConfig
 from yaspin import yaspin
 from yaspin.spinners import Spinners
-import time
-import datetime
-import tarfile
-import re
-import boto3
-import glob
-import os
-import shutil
-import pkg_resources
-import subprocess
-from sagemaker.multidatamodel import MultiDataModel
-from sagemaker.serverless import ServerlessInferenceConfig
-from sagemaker.model import Model
-import ast
-import csv
-import json
-import pickle
-import time
-import cmd
-from typing import List, Optional
-from sagemaker.predictor import Predictor
+
+__version__ = "1.99dev"
 
 _model_env_variable_map = {
     "huggingface-text2text-flan-t5-xxl": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
@@ -33,22 +35,28 @@ _model_env_variable_map = {
     "huggingface-text2text-flan-ul2-bf16": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
     "huggingface-text2text-bigscience-t0pp": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
     "huggingface-text2text-bigscience-t0pp-fp16": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
-    "huggingface-text2text-bigscience-t0pp-bnb-int8": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
-    "huggingface-textgeneration2-gpt-neoxt-chat-base-20b-fp16":{"TS_DEFAULT_WORKERS_PER_MODEL": "1"}
+    "huggingface-text2text-bigscience-t0pp-bnb-int8": {
+        "TS_DEFAULT_WORKERS_PER_MODEL": "1"
+    },
+    "huggingface-textgeneration2-gpt-neoxt-chat-base-20b-fp16": {
+        "TS_DEFAULT_WORKERS_PER_MODEL": "1"
+    },
 }
-
 
 
 class utils(object):
     def __init__(self):
         pass
+
     def list_foundation_models(self, filter_value="task == text2text"):
         from sagemaker.jumpstart.notebook_utils import list_jumpstart_models
+
         # print('\n'.join(list(_model_env_variable_map.keys())))
         text_generation_models = list_jumpstart_models(filter=filter_value)
         print("List of foundation models in Jumpstart: \n")
         print("\n".join(text_generation_models))
-    
+
+
 class Deploy(object):
     def __init__(
         self,
@@ -64,7 +72,7 @@ class Deploy(object):
         serverless_concurrency=10,
         wait=True,
         bucket=None,
-        prefix='',
+        prefix="",
         session=None,
         image=None,
         dockerfilepath=None,
@@ -74,13 +82,18 @@ class Deploy(object):
         ei=None,
         monitor=False,
         foundation_model=False,
-        foundation_model_version='*',
+        foundation_model_version="*",
         huggingface_model=False,
         huggingface_model_task=None,
-        huggingface_model_quantize=None
+        huggingface_model_quantize=None,
     ):
-
-        self.frameworklist = ["tensorflow", "pytorch", "mxnet", "sklearn","huggingface"]
+        self.frameworklist = [
+            "tensorflow",
+            "pytorch",
+            "mxnet",
+            "sklearn",
+            "huggingface",
+        ]
         self.frameworkinstalls = {
             "tensorflow": ["tensorflow"],
             "pytorch": ["torch"],
@@ -104,13 +117,23 @@ class Deploy(object):
         self.huggingface_model = huggingface_model
         self.huggingface_model_task = huggingface_model_task
         self.serverless = serverless
-        
+
+        if self.foundation_model:
+            self.ezsm_model_name = "ezsm-foundation-endpoint-" + self.name
+        else:
+            self.ezsm_model_name = "ezsm-endpoint-" + self.name
+
+        if self.huggingface_model:
+            self.ezsm_model_name = "ezsm-hf-endpoint-" + self.name
+
         if serverless:
             self.serverless_config = ServerlessInferenceConfig(
-                memory_size_in_mb=serverless_memory, max_concurrency=serverless_concurrency)
+                memory_size_in_mb=serverless_memory,
+                max_concurrency=serverless_concurrency,
+            )
         else:
             self.serverless_config = None
-            
+
         self.huggingface_model_quantize = huggingface_model_quantize
 
         # ------ load cost types dict ---------
@@ -124,18 +147,15 @@ class Deploy(object):
 
         # ------- basic instance type check --------
 
-        if (
-            self.instance_type == None
-        ):  # since we will not select a a GPU instance in automatic instance selection
+        # since we will not select a a GPU instance in automatic instance selection
+        if self.instance_type is None:
             self.gpu = False
             self.multimodel = True
         else:
-
             if (
                 (self.instance_type in list(self.costdict.keys()))
                 or "local" in self.instance_type
-            ) and self.instance_type != None:
-
+            ) and self.instance_type is not None:
                 if "local" in self.instance_type:
                     if (
                         self.instance_type == "local_gpu"
@@ -175,7 +195,7 @@ class Deploy(object):
         elif type(model) == list:
             self.model = model
             self.multimodel = True
-        elif model == None:  # assume you are loading from a hub or from a dockerfile
+        elif model is None:  # assume you are loading from a hub or from a dockerfile
             with open("tmpmodel", "w") as fp:
                 pass
             self.model = ["tmpmodel"]
@@ -186,13 +206,13 @@ class Deploy(object):
                 list of files ([model.pkl, model2.pkl]). If you are downloading a model in the script \
                 or packaging with the container, pass in model = None"
             )
-            
+
         # if self.huggingface_model:
         #     # if self.huggingface_model_task == None:
         #     #     print("Using None as task type")
         #     # else:
         #     #     pr
-                # raise ValueError("Please specify huggingface_model_task. For example: question-answering")
+        # raise ValueError("Please specify huggingface_model_task. For example: question-answering")
 
         # ------- Script checks ---------
         if not (self.foundation_model or self.huggingface_model):
@@ -208,7 +228,9 @@ class Deploy(object):
             filename = self.script
             with open(filename) as file:
                 node = ast.parse(file.read())
-                functions = [n.name for n in node.body if isinstance(n, ast.FunctionDef)]
+                functions = [
+                    n.name for n in node.body if isinstance(n, ast.FunctionDef)
+                ]
 
             if ("load_model" not in functions) and ("predict" not in functions):
                 raise ValueError(
@@ -218,13 +240,13 @@ class Deploy(object):
                 )
 
         # ------- session checks --------
-        if session == None:
+        if session is None:
             self.session = sagemaker.session.Session()
         else:
             self.session = session  # leave session as none since users may want to do local testing.
 
         # ------- name checks --------
-        if name == None:
+        if name is None:
             self.name = shortuuid.uuid().lower()
         elif type(name) == str:
             self.name = name
@@ -240,7 +262,7 @@ class Deploy(object):
             )
 
         # ------- bucket checks --------
-        if bucket == None:
+        if bucket is None:
             self.bucket = self.session.default_bucket()
         else:
             self.bucket = bucket
@@ -248,10 +270,15 @@ class Deploy(object):
         self.requirements = requirements
 
         # ------- framework --------
-        if requirements == None and framework in self.frameworklist:
+        if requirements is None and framework in self.frameworklist:
             self.framework = framework
             self.requirements = self.frameworkinstalls[framework]
-        elif requirements == None and framework not in self.frameworklist and not self.foundation_model and not self.huggingface_model:
+        elif (
+            requirements == None
+            and framework not in self.frameworklist
+            and not self.foundation_model
+            and not self.huggingface_model
+        ):
             raise ValueError(
                 "If requirements=None, please provide a value for framework; \
                     choice should be one of 'tensorflow','pytorch','mxnet','sklearn'"
@@ -262,112 +289,122 @@ class Deploy(object):
         self.wait = wait
         self.deploy()
 
-    
-    
     def deploy_huggingface_model(self):
-        
-        if self.instance_type == None and not self.serverless:
+        if self.instance_type is None and not self.serverless:
             raise ValueError("Please enter a valid instance type, not [None]")
-        
+
         # from sagemaker.huggingface.model import HuggingFaceModel, get_huggingface_llm_image_uri
-        from sagemaker.huggingface import HuggingFaceModel, get_huggingface_llm_image_uri
-        
+        from sagemaker.huggingface import (
+            HuggingFaceModel,
+            get_huggingface_llm_image_uri,
+        )
+
         self.model = self.model[0]
         hub = {
-            'HF_MODEL_ID':self.model,                # model_id from hf.co/models
+            "HF_MODEL_ID": self.model,  # model_id from hf.co/models
         }
-        
-        
+
         if self.huggingface_model_task is not None:
-             hub['HF_TASK'] = self.huggingface_model_task    # NLP task you want to use for predictions
-        
-        if not self.serverless: #ignore instance type checks, and ignore fallback. Also ignore quantization
+            hub[
+                "HF_TASK"
+            ] = self.huggingface_model_task  # NLP task you want to use for predictions
+
+        if (
+            not self.serverless
+        ):  # ignore instance type checks, and ignore fallback. Also ignore quantization
             try:
                 ec2_client = boto3.client("ec2")
-                resp = ec2_client.describe_instance_types(InstanceTypes=[self.instance_type.strip("ml.")])['InstanceTypes'][0]
-                if 'GpuInfo' in resp:
-                    hub['SM_NUM_GPUS']= json.dumps(resp['GpuInfo']['Gpus'][0]['Count'])
+                resp = ec2_client.describe_instance_types(
+                    InstanceTypes=[self.instance_type.strip("ml.")]
+                )["InstanceTypes"][0]
+                if "GpuInfo" in resp:
+                    hub["SM_NUM_GPUS"] = json.dumps(resp["GpuInfo"]["Gpus"][0]["Count"])
                 else:
                     pass
             except Exception as e:
                 print(e, end=" ... ")
-                print("Trying fallback to figure out number of GPUs in the instance type you chose - ")
-                hub['SM_NUM_GPUS']= json.dumps(0) # Use at least 0 GPU by default. else:
-                if 'g' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(1)
-                    if '12x' in self.instance_type:
-                        hub['SM_NUM_GPUS']= json.dumps(4)
-                    elif '24x' in self.instance_type:
-                        hub['SM_NUM_GPUS']= json.dumps(4)
-                    elif '48x' in self.instance_type:
-                        hub['SM_NUM_GPUS']= json.dumps(4)
-                elif 'p2' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(1)
-                    if '8x' in self.instance_type:
-                        hub['SM_NUM_GPUS']=json.dumps(8)
-                    elif '16x' in self.instance_type:
-                        hub['SM_NUM_GPUS']=json.dumps(16)
-                elif 'p3' in self.instance_type:
-                    hub['SM_NUM_GPUS']= json.dumps(1)
-                    if '8x' in self.instance_type:
-                        hub['SM_NUM_GPUS']=json.dumps(4)
-                    elif '16x' in self.instance_type:
-                        hub['SM_NUM_GPUS']=json.dumps(8)
-                    elif '24x' in self.instance_type:
-                        hub['SM_NUM_GPUS']=json.dumps(8)
-                elif 'p4' in self.instance_type:
-                    hub['SM_NUM_GPUS']=json.dumps(8)
+                print(
+                    "Trying fallback to figure out number of GPUs in the instance type you chose - "
+                )
+                hub["SM_NUM_GPUS"] = json.dumps(
+                    0
+                )  # Use at least 0 GPU by default. else:
+                if "g" in self.instance_type:
+                    hub["SM_NUM_GPUS"] = json.dumps(1)
+                    if "12x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(4)
+                    elif "24x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(4)
+                    elif "48x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(4)
+                elif "p2" in self.instance_type:
+                    hub["SM_NUM_GPUS"] = json.dumps(1)
+                    if "8x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(8)
+                    elif "16x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(16)
+                elif "p3" in self.instance_type:
+                    hub["SM_NUM_GPUS"] = json.dumps(1)
+                    if "8x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(4)
+                    elif "16x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(8)
+                    elif "24x" in self.instance_type:
+                        hub["SM_NUM_GPUS"] = json.dumps(8)
+                elif "p4" in self.instance_type:
+                    hub["SM_NUM_GPUS"] = json.dumps(8)
 
-
-
-
-            if self.huggingface_model_quantize in ['bitsandbytes', 'gptq']:
-                hub['HF_MODEL_QUANTIZE'] = self.huggingface_model_quantize
-            elif self.huggingface_model_quantize==None:
+            if self.huggingface_model_quantize in ["bitsandbytes", "gptq"]:
+                hub["HF_MODEL_QUANTIZE"] = self.huggingface_model_quantize
+            elif self.huggingface_model_quantize is None:
                 pass
             else:
-                raise ValueError(f"huggingface_model_quantize needs to be one of bitsandbytes, gptq, not {self.huggingface_model_quantize}")
+                raise ValueError(
+                    f"huggingface_model_quantize needs to be one of bitsandbytes, gptq, not {self.huggingface_model_quantize}"
+                )
 
-        
-        
         aws_role = sagemaker.get_execution_role()
-        endpoint_name = name="hf-model-" + self.name
-        
+        endpoint_name = "hf-model-" + self.name
+
         # create Hugging Face Model Class
-        if not self.serverless and self.foundation_model and self.huggingface_model: #Basically just for large models
+        if (
+            not self.serverless and self.foundation_model and self.huggingface_model
+        ):  # Basically just for large models
             self.sagemakermodel = HuggingFaceModel(
-               image_uri=get_huggingface_llm_image_uri("huggingface"),
-               env=hub,                                                # configuration for loading model from Hub
-               role=aws_role,                                          # IAM role with permissions to create an endpoint
-               name=endpoint_name,
-               transformers_version="4.26",                             # Transformers version used
-               pytorch_version="1.13",                                  # PyTorch version used
-               py_version='py39',                                      # Python version used
+                image_uri=get_huggingface_llm_image_uri("huggingface"),
+                env=hub,  # configuration for loading model from Hub
+                role=aws_role,  # IAM role with permissions to create an endpoint
+                name=endpoint_name,
+                transformers_version="4.26",  # Transformers version used
+                pytorch_version="1.13",  # PyTorch version used
+                py_version="py39",  # Python version used
             )
         else:
             self.sagemakermodel = HuggingFaceModel(
-                env=hub,                      # configuration for loading model from Hub
-                role=aws_role,                    # iam role with permissions to create an Endpoint
+                env=hub,  # configuration for loading model from Hub
+                role=aws_role,  # iam role with permissions to create an Endpoint
                 transformers_version="4.26",  # transformers version used
-                pytorch_version="1.13",        # pytorch version used
-                py_version='py39',            # python version used
-                )
-    
+                pytorch_version="1.13",  # pytorch version used
+                py_version="py39",  # python version used
+            )
+
     def deploy_foundation_model(self):
         # Assume foundation model on Jumpstart here
 
-        
-        from sagemaker import image_uris, instance_types, model_uris, script_uris
+        from sagemaker import instance_types
+
         self.model = self.model[0]
         # print("self.model = ", self.model)
         instance_type = instance_types.retrieve_default(
-            model_id=self.model, model_version=self.foundation_model_version, scope="inference"
+            model_id=self.model,
+            model_version=self.foundation_model_version,
+            scope="inference",
         )
-        if self.instance_type == None:
+        if self.instance_type is None:
             self.instance_type = instance_type
         # self.costperhour = self.costdict[self.instance_type]
 
-        # Retrieve the inference docker container uri. 
+        # Retrieve the inference docker container uri.
         deploy_image_uri = sagemaker.image_uris.retrieve(
             region=None,
             framework=None,  # automatically inferred from model_id
@@ -379,22 +416,26 @@ class Deploy(object):
 
         # Retrieve the inference script uri. This includes all dependencies and scripts for model loading, inference handling etc.
         deploy_source_uri = sagemaker.script_uris.retrieve(
-            model_id=self.model, model_version=self.foundation_model_version, script_scope="inference"
+            model_id=self.model,
+            model_version=self.foundation_model_version,
+            script_scope="inference",
         )
+        print(f"deploy_source_uri: {deploy_source_uri}")
 
         # Retrieve the model uri.
         model_uri = sagemaker.model_uris.retrieve(
-            model_id=self.model, model_version=self.foundation_model_version, model_scope="inference"
+            model_id=self.model,
+            model_version=self.foundation_model_version,
+            model_scope="inference",
         )
         aws_role = sagemaker.get_execution_role()
         endpoint_name = "model-" + self.name
-        
+
         # Create the SageMaker model instance
         if self.model in _model_env_variable_map:
             # For those large models, we already repack the inference script and model
             # artifacts for you, so the `source_dir` argument to Model is not required.
-            
-            
+
             self.sagemakermodel = sagemaker.model.Model(
                 image_uri=deploy_image_uri,
                 model_data=model_uri,
@@ -405,13 +446,14 @@ class Deploy(object):
             )
         else:
             from sagemaker.jumpstart.model import JumpStartModel
-            
-            self.sagemakermodel =  JumpStartModel(model_id = self.model,
-                                             model_version = self.foundation_model_version,
-                                             role=aws_role)
 
-            
-    def get_sagemaker_session(self,local_download_dir='src') -> sagemaker.Session:
+            self.sagemakermodel = JumpStartModel(
+                model_id=self.model,
+                model_version=self.foundation_model_version,
+                role=aws_role,
+            )
+
+    def get_sagemaker_session(self, local_download_dir="src") -> sagemaker.Session:
         """Return the SageMaker session."""
 
         sagemaker_client = boto3.client(
@@ -428,12 +470,12 @@ class Deploy(object):
         )
 
         return session
-        
+
     def process_instance_type(self):
         # ------ instance checks --------
         self.instancedict = {}
-    
-        if self.instance_type == None:
+
+        if self.instance_type is None:
             # ------ load instance types dict ---------
             instancetypepath = pkg_resources.resource_filename(
                 "ezsmdeploy", "data/instancetypes.csv"
@@ -451,14 +493,13 @@ class Deploy(object):
             self.choose_instance_type()
 
         else:
-
             if (self.instance_type in list(self.costdict.keys())) or (
                 self.instance_type in ["local", "local_gpu"]
             ):
                 if self.instance_type not in ["local", "local_gpu"]:
                     self.costperhour = self.costdict[self.instance_type]
 
-                    if self.ei != None:
+                    if self.ei is not None:
                         eicosts = {
                             "ml.eia2.medium": 0.12,
                             "ml.eia2.large": 0.24,
@@ -480,13 +521,13 @@ class Deploy(object):
 
     def choose_instance_type(self):
         # TO DO : add heuristic for auto selection of instance size
-        
-        if self.prefix =='':
+
+        if self.prefix == "":
             tmppath = "ezsmdeploy/model-" + self.name + "/"
         else:
-            tmppath = self.prefix+"/ezsmdeploy/model-" + self.name + "/"
+            tmppath = self.prefix + "/ezsmdeploy/model-" + self.name + "/"
 
-        size = self.get_size(self.bucket, tmppath )
+        size = self.get_size(self.bucket, tmppath)
 
         self.instancetypespath = pkg_resources.resource_filename(
             "ezsmdeploy", "data/instancetypes.csv"
@@ -506,7 +547,7 @@ class Deploy(object):
             # cost and memory per worker
             memperworker = self.instancedict[instance][0]
             cost = self.instancedict[instance][1]
-            costpermem = self.instancedict[instance][2]
+            self.instancedict[instance][2]
             #
             if self.budget == 100:
                 # even though budget is unlimited, minimize cost
@@ -519,7 +560,7 @@ class Deploy(object):
                     choseninstance = instance
                     break
 
-        if choseninstance == None and self.budget != 100:
+        if choseninstance is None and self.budget != 100:
             raise ValueError(
                 "Could not find an instance that satisfies your budget of "
                 + str(self.budget)
@@ -527,7 +568,7 @@ class Deploy(object):
                 + str(size)
                 + " Gb. Please choose a higher budget per hour."
             )
-        elif choseninstance == None and self.budget == 100:
+        elif choseninstance is None and self.budget == 100:
             raise ValueError(
                 "You may be using large models with a total size of "
                 + str(size)
@@ -542,9 +583,7 @@ class Deploy(object):
         self.sagemakermodel.add_model(s3path, relativepath)
 
     def create_model(self):
-
         if not self.multimodel:
-
             self.sagemakermodel = Model(
                 name="model-" + self.name,
                 model_data=self.modelpath[0],
@@ -555,7 +594,6 @@ class Deploy(object):
             )
 
         else:
-
             self.sagemakermodel = MultiDataModel(
                 name="model-" + self.name,
                 model_data_prefix="/".join(self.modelpath[0].split("/")[:-1]) + "/",
@@ -571,12 +609,10 @@ class Deploy(object):
             self.ei = False
 
     def deploy_model(self):
-
         if self.monitor:
             from sagemaker.model_monitor import DataCaptureConfig
-            
-            
-            if prefix == '':
+
+            if self.prefix == "":
                 tmps3uri = "s3://{}/ezsmdeploy/model-{}/datacapture".format(
                     self.bucket, self.name
                 )
@@ -584,27 +620,33 @@ class Deploy(object):
                 tmps3uri = "s3://{}/{}/ezsmdeploy/model-{}/datacapture".format(
                     self.bucket, self.prefix, self.name
                 )
-            
+
             data_capture_config = DataCaptureConfig(
                 enable_capture=True,
                 sampling_percentage=100,
-                destination_s3_uri=tmps3uri
+                destination_s3_uri=tmps3uri,
             )
         else:
             data_capture_config = None
-        
+
         if self.instance_type is not None:
             volume_size = None
-            if "p3" in self.instance_type or "p4" in self.instance_type or "16x" in self.instance_type or "24x" in self.instance_type or "48x" in self.instance_type or self.foundation_model:
-                volume_size = 256 
-            
+            if (
+                "p3" in self.instance_type
+                or "p4" in self.instance_type
+                or "16x" in self.instance_type
+                or "24x" in self.instance_type
+                or "48x" in self.instance_type
+                or self.foundation_model
+            ):
+                volume_size = 256
+
             if "g5" in self.instance_type:
                 volume_size = None
-                    
+
         else:
-            volume_size = None 
-            
-        
+            volume_size = None
+
         if self.foundation_model and not self.huggingface_model:
             # deploy the Model. Note that we need to pass Predictor class when we deploy model through Model class,
             # for being able to run inference through the sagemaker API.
@@ -613,42 +655,37 @@ class Deploy(object):
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 # predictor_cls=sagemaker.predictor.Predictor, # Have to remove this since the new JumpstartModel SDK fails
-                endpoint_name="ezsm-foundation-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 # serverless_inference_config=self.serverless_config, #ignoring serverless inference
-                wait=self.wait
+                wait=self.wait,
             )
         elif self.foundation_model and self.huggingface_model:
-            
-            
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
-                endpoint_name="ezsm-hf-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 wait=self.wait,
                 container_startup_health_check_timeout=300,
             )
-            
+
         elif self.huggingface_model and not self.foundation_model:
-            
-            
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
-                endpoint_name="ezsm-hf-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 volume_size=volume_size,
                 serverless_inference_config=self.serverless_config,
-                wait=self.wait
+                wait=self.wait,
             )
-                
-            
+
         else:
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
                 accelerator_type=self.ei,
-                endpoint_name="ezsm-endpoint-" + self.name,
+                endpoint_name=self.ezsm_model_name,
                 update_endpoint=False,
                 wait=self.wait,
                 volume_size=volume_size,
@@ -657,7 +694,7 @@ class Deploy(object):
                 container_startup_health_check_timeout=300,
             )
 
-        self.endpoint_name = "ezsm-endpoint-" + self.name
+        self.endpoint_name = self.ezsm_model_name
 
     def get_size(self, bucket, path):
         s3 = boto3.resource("s3")
@@ -671,7 +708,7 @@ class Deploy(object):
 
     def upload_model(self):
         i = 1
-        if self.prefix == '':
+        if self.prefix == "":
             tmppath = "ezsmdeploy/model-"
         else:
             tmppath = self.prefix + "/ezsmdeploy/model-"
@@ -687,30 +724,27 @@ class Deploy(object):
             i += 1
 
     def tar_model(self):
-
         i = 1
         for name in self.model:
-
-            if "tar.gz" in name and 's3' in name:
+            if "tar.gz" in name and "s3" in name:
                 # download and uncompress
                 self.session.download_data(
                     path="./downloads/{}".format(i),
                     bucket=name.split("/")[2],
                     key_prefix="/".join(name.split("/")[3:]),
                 )
-                
+
                 with tarfile.open(
                     glob.glob("./downloads/{}/*.tar.gz".format(i))[0]
                 ) as tar:
                     tar.extractall("./extractedmodel/{}/".format(i))
 
                 name = "extractedmodel/{}/".format(i)
-                
-            elif 'tar.gz' in name and 's3' not in name:
-                
+
+            elif "tar.gz" in name and "s3" not in name:
                 self.makedir_safe("./downloads/{}/".format(i))
                 shutil.copy(name, "./downloads/{}/".format(i))
-                
+
                 with tarfile.open(
                     glob.glob("./downloads/{}/*.tar.gz".format(i))[0]
                 ) as tar:
@@ -727,7 +761,6 @@ class Deploy(object):
             i += 1
 
     def makedir_safe(self, directory):
-
         try:
             shutil.rmtree(directory)
         except:
@@ -765,17 +798,15 @@ class Deploy(object):
                 "pass in a path/to/requirements.txt or a list of requirements ['scikit-learn',...,...]"
             )
 
-
-
     def build_docker(self):
         cmd = "chmod +x src/build-docker.sh  & sudo ./src/build-docker.sh {}"
-        
-        with open('src/dockeroutput.txt', 'w') as f:
-            #print("Start process")
-            p = subprocess.Popen(cmd.format(self.name), stdout=f, shell=True)
-        
-        #print("process running in background")
-        
+
+        with open("src/dockeroutput.txt", "w") as f:
+            # print("Start process")
+            _ = subprocess.Popen(cmd.format(self.name), stdout=f, shell=True)
+
+        # print("process running in background")
+
         acct = (
             os.popen("aws sts get-caller-identity --query Account --output text")
             .read()
@@ -788,8 +819,8 @@ class Deploy(object):
 
         while not os.path.exists("src/done.txt"):
             time.sleep(3)
-        
-        self.dockeroutput = "Please see src/dockeroutput.txt" 
+
+        self.dockeroutput = "Please see src/dockeroutput.txt"
 
     def autoscale_endpoint(self):
         response = boto3.client("sagemaker").describe_endpoint(
@@ -830,21 +861,18 @@ class Deploy(object):
     def test(
         self, input_data, target_model=None, usercount=10, hatchrate=5, timeoutsecs=5
     ):
-
-        if self.multimodel and target_model == None:
+        if self.multimodel and target_model is None:
             raise ValueError(
                 "since this is a multimodel endpoint, please pass in a target model that you wish to test"
             )
 
         if self.deployed:
-
             path1 = pkg_resources.resource_filename("ezsmdeploy", "data/smlocust.py")
             shutil.copy(path1, "src/smlocust.py")
 
             start = datetime.datetime.now()
 
             with yaspin(Spinners.point, color="green", text="") as sp:
-
                 sp.hide()
                 sp.write(
                     str(datetime.datetime.now() - start)
@@ -873,7 +901,7 @@ class Deploy(object):
                 cmd = "locust -f src/smlocust.py --no-web -c {} -r {} --run-time {}s --csv=src/locuststats; touch src/testdone.txt".format(
                     usercount, hatchrate, timeoutsecs
                 )
-                p = os.system(cmd)
+                os.system(cmd)
                 while not os.path.exists("src/testdone.txt"):
                     time.sleep(3)
 
@@ -894,8 +922,7 @@ class Deploy(object):
         start = datetime.datetime.now()
 
         with yaspin(Spinners.point, color="green", text="") as sp:
-
-            if not (self.foundation_model or self.huggingface_model) :
+            if not (self.foundation_model or self.huggingface_model):
                 try:
                     shutil.rmtree("src/")
                 except:
@@ -932,7 +959,7 @@ class Deploy(object):
 
                 # else:
                 # handle requirements
-                if self.requirements == None:
+                if self.requirements is None:
                     rtext = (
                         str(datetime.datetime.now() - start)
                         + " | no additional requirements found"
@@ -941,7 +968,8 @@ class Deploy(object):
                 else:
                     self.handle_requirements()
                     rtext = (
-                        str(datetime.datetime.now() - start) + " | added requirements file"
+                        str(datetime.datetime.now() - start)
+                        + " | added requirements file"
                     )
                 sp.hide()
                 sp.write(rtext)
@@ -954,11 +982,11 @@ class Deploy(object):
                 sp.show()
 
                 # ------ Dockerfile checks -------
-                if self.dockerfilepath == None and self.multimodel == True:
+                if self.dockerfilepath is None and self.multimodel is True:
                     self.dockerfilepath = pkg_resources.resource_filename(
                         "ezsmdeploy", "data/Dockerfile"
                     )
-                elif self.dockerfilepath == None and self.multimodel == False:
+                elif self.dockerfilepath is None and self.multimodel is False:
                     self.dockerfilepath = pkg_resources.resource_filename(
                         "ezsmdeploy", "data/Dockerfile_flask"
                     )
@@ -991,13 +1019,17 @@ class Deploy(object):
 
                 else:
                     # Use Flask stack
-                    path1 = pkg_resources.resource_filename("ezsmdeploy", "data/nginx.conf")
+                    path1 = pkg_resources.resource_filename(
+                        "ezsmdeploy", "data/nginx.conf"
+                    )
                     path2 = pkg_resources.resource_filename(
                         "ezsmdeploy", "data/predictor.py"
                     )
                     path3 = pkg_resources.resource_filename("ezsmdeploy", "data/serve")
                     path4 = pkg_resources.resource_filename("ezsmdeploy", "data/train")
-                    path5 = pkg_resources.resource_filename("ezsmdeploy", "data/wsgi.py")
+                    path5 = pkg_resources.resource_filename(
+                        "ezsmdeploy", "data/wsgi.py"
+                    )
                     path6 = pkg_resources.resource_filename(
                         "ezsmdeploy", "data/build-docker.sh"
                     )
@@ -1009,7 +1041,7 @@ class Deploy(object):
                     shutil.copy(path5, "src/wsgi.py")
                     shutil.copy(path6, "src/build-docker.sh")
 
-                    if self.gpu and self.ei != None:
+                    if self.gpu and self.ei is not None:
                         self.ei = None
                         sp.hide()
                         sp.write(
@@ -1035,7 +1067,8 @@ class Deploy(object):
                     self.build_docker()
                     sp.hide()
                     sp.write(
-                        str(datetime.datetime.now() - start) + " | built docker container"
+                        str(datetime.datetime.now() - start)
+                        + " | built docker container"
                     )
                     sp.show()
 
@@ -1047,10 +1080,12 @@ class Deploy(object):
                 elif self.huggingface_model:
                     self.deploy_huggingface_model()
                 else:
-                    raise ValueError("Did not find model artifact, or foundation/huggingface model")
-                
+                    raise ValueError(
+                        "Did not find model artifact, or foundation/huggingface model"
+                    )
+
             sp.hide()
-            
+
             if not self.serverless:
                 sp.write(
                     str(datetime.datetime.now() - start)
@@ -1120,29 +1155,29 @@ class Deploy(object):
                 pass
 
             return self.predictor
-        
+
     def chat(self):
         # if self.foundation_model and 'chat' in self.model or 'Chat' in self.model :
         OpenChatKitShell(
             predictor=self.predictor,
-            model_name = self.model,
+            model_name=self.model,
             max_new_tokens=128,
             do_sample=True,
             temperature=0.6,
-            top_k=40
+            top_k=40,
         ).cmdloop()
-        
+
         # else:
         #     print("Sorry, you can only use the chat functionality with gpt-neoxt-chat-base-20b or the RedPajama chat models for now")
 
 
-
-MEANINGLESS_WORDS = ['<pad>', '</s>', '<|endoftext|>']
+MEANINGLESS_WORDS = ["<pad>", "</s>", "<|endoftext|>"]
 PRE_PROMPT = """\
 Current Date: {}
 Current Time: {}
 
 """
+
 
 def clean_response(response):
     for word in MEANINGLESS_WORDS:
@@ -1150,10 +1185,11 @@ def clean_response(response):
     response = response.strip("\n")
     return response
 
+
 class Conversation:
     def __init__(self, human_id, bot_id):
-        cur_date = time.strftime('%Y-%m-%d')
-        cur_time = time.strftime('%H:%M:%S %p %Z')
+        cur_date = time.strftime("%Y-%m-%d")
+        cur_time = time.strftime("%H:%M:%S %p %Z")
 
         self._human_id = human_id
         self._bot_id = bot_id
@@ -1188,8 +1224,7 @@ class Conversation:
 
     @classmethod
     def from_raw_prompt(cls, value):
-        self._prompt = value
-
+        cls._prompt = value
 
 
 class OpenChatKitShell(cmd.Cmd):
@@ -1201,7 +1236,13 @@ class OpenChatKitShell(cmd.Cmd):
     human_id = "<human>"
     bot_id = "<bot>"
 
-    def __init__(self, predictor: Predictor, model_name: str, cmd_queue: Optional[List[str]] = None, **kwargs):
+    def __init__(
+        self,
+        predictor: Predictor,
+        model_name: str,
+        cmd_queue: Optional[List[str]] = None,
+        **kwargs,
+    ):
         super().__init__()
         self.predictor = predictor
         self.model = model_name
@@ -1220,24 +1261,25 @@ class OpenChatKitShell(cmd.Cmd):
     def do_say(self, arg):
         self.conversation.push_human_turn(arg)
         prompt = self.conversation.get_raw_prompt()
-        if 'neoxt-chat' in self.model:
+        if "neoxt-chat" in self.model:
             # For neoxt - chatbase - 20B
             payload = {"text_inputs": prompt, **self.payload_kwargs}
             response = self.predictor.predict(payload)
             output = response[0][0]["generated_text"][len(prompt) :]
-        elif '-Chat' in self.model or 'chat' in self.model: #for RedPajama chat models, experimental for other chat models like openchat/openchat
-            
-            payload = {"inputs":prompt,
-           "parameters":{"max_new_tokens":100}}
-            
-            
-            response = self.predictor.predict(payload) 
-            last = response[0]['generated_text'].rfind("\n<human>") #returns -1 if the human token hasn't been found yet, which works
-            output = response[0]["generated_text"][len(prompt) :last]
-            
+        elif (
+            "-Chat" in self.model or "chat" in self.model
+        ):  # for RedPajama chat models, experimental for other chat models like openchat/openchat
+            payload = {"inputs": prompt, "parameters": {"max_new_tokens": 100}}
+
+            response = self.predictor.predict(payload)
+            last = response[0]["generated_text"].rfind(
+                "\n<human>"
+            )  # returns -1 if the human token hasn't been found yet, which works
+            output = response[0]["generated_text"][len(prompt) : last]
+
         else:
             output = "I don't recognize the output from this chat model"
-            
+
         self.conversation.push_model_response(output)
         print(self.conversation.get_last_turn())
 
