@@ -3,7 +3,7 @@ algorithm_name=ezsmdeploy-image-$1
 
 echo "Building container ${algorithm_name}"
 
-cd src 
+cd src
 
 account=$(aws sts get-caller-identity --query Account --output text)
 
@@ -36,7 +36,7 @@ docker tag ${algorithm_name} ${fullname}
 
 echo "Pushing"
 docker push ${fullname}
- 
+
 echo "${fullname}"
 
 # Have to do this because pythons subprocess for calling this script does not wait for it to finish. Tried various args to Popen

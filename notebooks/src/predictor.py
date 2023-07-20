@@ -2,16 +2,9 @@
 # implement the scoring for your own algorithm.
 
 import os
-import json
-import pickle
-from io import StringIO
-import sys
-import signal
-import traceback
 
 import flask
-
-from transformscript import *
+from transformscript import load_model, predict
 
 prefix = "/opt/ml/"
 model_path = os.path.join(prefix, "model")
@@ -26,7 +19,7 @@ class ScoringService(object):
     @classmethod
     def get_model(cls):
         """Get the model object for this instance, loading it if it's not already loaded."""
-        if cls.model == None:
+        if cls.model is None:
             cls.model = load_model(model_path)
         return cls.model
 

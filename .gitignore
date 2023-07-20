@@ -7,3 +7,37 @@ sdist/
 *egginfo*
 ezsmdeploy.egg-info/
 ezsmdeploy.egg-info
+**.egg**
+**.ipynb_checkpoints**
+**.env**
+*.pyc
+*.pyo
+*__pycache__
+**__pycache__**
+*DS_Store
+
+.pytest_cache
+.mypy_cache
+
+dist
+**.egg**
+**.ipynb_checkpoints**
+**.env**
+
+**/tmp**
+# Ignore compiled Python files
+*.pyc
+*.pyo
+
+# Ignore build directories
+.tox
+.venv
+env/
+
+# Ignore dist directories
+dist/
+
+# Ignore tc directories
+tc/
+dist
+build

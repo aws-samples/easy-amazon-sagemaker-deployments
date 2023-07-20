@@ -1,10 +1,10 @@
-from locust import Locust, between, TaskSet, events, task
-import os
-import sagemaker
-import time
 import json
 import pickle
 import sys
+import time
+
+import sagemaker
+from locust import Locust, TaskSet, between, events, task
 
 with open("src/locustdata.txt") as json_file:
     locustdata = json.load(json_file)
@@ -13,8 +13,6 @@ endpoint_name = locustdata["endpoint_name"]
 p = sagemaker.predictor.RealTimePredictor(endpoint_name)
 target_model = locustdata["target_model"]
 input_data = pickle.load(open("src/testdata.p", "rb"))
-
-from locust import Locust, TaskSet, task, between
 
 
 class MyTaskSet(TaskSet):

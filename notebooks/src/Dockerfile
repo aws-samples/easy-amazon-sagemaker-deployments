@@ -26,7 +26,7 @@ RUN apt-get update && \
     gcc \
     libpq-dev \
     python3-wheel \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip
 
