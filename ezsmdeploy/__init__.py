@@ -657,7 +657,7 @@ class Deploy(object):
                 container_startup_health_check_timeout=300,
             )
 
-        self.endpoint_name = "ezsm-endpoint-" + self.name
+        self.endpoint_name = self.predictor.endpoint_name
 
     def get_size(self, bucket, path):
         s3 = boto3.resource("s3")
