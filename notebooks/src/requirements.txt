@@ -1,4 +1,0 @@
-numpy
-tensorflow>=2.5
-tensorflow-probability
-h5py
