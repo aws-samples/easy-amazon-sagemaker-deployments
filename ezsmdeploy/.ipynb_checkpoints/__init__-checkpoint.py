@@ -576,7 +576,7 @@ class Deploy(object):
             from sagemaker.model_monitor import DataCaptureConfig
             
             
-            if prefix == '':
+            if self.prefix == '':
                 tmps3uri = "s3://{}/ezsmdeploy/model-{}/datacapture".format(
                     self.bucket, self.name
                 )
