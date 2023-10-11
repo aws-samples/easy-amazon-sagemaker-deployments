@@ -65,6 +65,7 @@ class Deploy(object):
         wait=True,
         bucket=None,
         prefix='',
+        volume_size=None,
         session=None,
         image=None,
         dockerfilepath=None,
@@ -104,6 +105,7 @@ class Deploy(object):
         self.huggingface_model = huggingface_model
         self.huggingface_model_task = huggingface_model_task
         self.serverless = serverless
+        self.volume_size = volume_size
         
         if serverless:
             self.serverless_config = ServerlessInferenceConfig(
@@ -592,17 +594,20 @@ class Deploy(object):
             )
         else:
             data_capture_config = None
+
         
-        if self.instance_type is not None:
-            volume_size = None
+        volume_size = self.volume_size
+        if self.instance_type is not None and volume_size==None:
+
+            # Need to override volume size in some cases
             if "p3" in self.instance_type or "p4" in self.instance_type or "16x" in self.instance_type or "24x" in self.instance_type or "48x" in self.instance_type or self.foundation_model:
                 volume_size = 256 
             
             if "g5" in self.instance_type:
                 volume_size = None
+                
+            #otherwise leave as default
                     
-        else:
-            volume_size = None 
             
         
         if self.foundation_model and not self.huggingface_model:

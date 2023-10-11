@@ -1,11 +1,11 @@
-Building container ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz
-Building 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz
-Creating repo for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz if it doesn't already exist
-Getting login for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz
+Building container ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij
+Building 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij
+Creating repo for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij if it doesn't already exist
+Getting login for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij
 Login Succeeded
 Building locally
 Pushing
 Using default tag: latest
-The push refers to repository [716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz]
-716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-6erhdxfljxn6tvkmt99pxz
+The push refers to repository [716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij]
+716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-dhuo7fhawqwa6dc98wjvij
 SUCCESS
