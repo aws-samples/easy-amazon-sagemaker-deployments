@@ -16,6 +16,7 @@ RUN apt -y update && apt -y upgrade && \
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     build-essential \
+    git \
     ca-certificates \
     openjdk-8-jdk-headless \
     python3 \
