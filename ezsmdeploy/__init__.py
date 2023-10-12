@@ -654,7 +654,6 @@ class Deploy(object):
                 instance_type=self.instance_type,
                 accelerator_type=self.ei,
                 endpoint_name="ezsm-endpoint-" + self.name,
-                update_endpoint=False,
                 wait=self.wait,
                 volume_size=volume_size,
                 data_capture_config=data_capture_config,
@@ -1123,6 +1122,9 @@ class Deploy(object):
                 os.remove("tmpmodel")
             except:
                 pass
+            
+            self.predict = self.predictor.predict
+            self.delete_endpoint = self.predictor.delete_endpoint
 
             return self.predictor
         

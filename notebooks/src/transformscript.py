@@ -131,8 +131,17 @@ def load_model(modelpath):
 # return prediction based on loaded model (from the step above) and an input payload
 def predict(model, payload):
     
+    
+    # json_payload = '{"size": [100, 100], "image_bytes": "BASE64_ENCODED_IMAGE_DATA", "text_prompt": "wheel"}'
+
+    # Parse the JSON payload
+    payload = json.loads(payload)
+
+    # Decode the Base64 image data back into bytes
+    image_bytes_base64 = payload['image_bytes']
+    image_bytes = base64.b64decode(image_bytes_base64)
+    
     size = payload['size']
-    image_bytes = payload['image_bytes']
     text_prompt = payload['text_prompt']
     
     image_pil = Image.frombytes("RGB",size = size, data = image_bytes) 
