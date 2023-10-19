@@ -55,8 +55,10 @@ V 2.x release notes
     - huggyllama/llama-65b, ml.g5.16xlarge
     - ausboss/llama-30b-supercot, ml.g4dn.4xlarge
     - MetaIX/GPT4-X-Alpasta-30b, ml.g4dn.4xlarge
-    - 
     - Also tried several small/tiny models from huggingface on Serverless - (distilbert / dynamic-tinybert / deepset/tinyroberta-squad2 / facebook/detr-resnet-50) 
+5. Added async inference support through 
+6. Added predict and delete_endpoint functions as aliases to the returned object from Deploy so it is easier to do predictions once deployed
+7. Added new notebooks for all of the above examples
 
 
 V 1.x release notes
@@ -84,6 +86,12 @@ The Ezsmdeploy Python SDK is built to PyPI and has the following dependencies sa
 ::
 
     pip install ezsmdeploy
+    
+Make sure you upgrade to the latest stable version of ezsmdeploy if you have been using this library in the past:
+
+::
+
+    pip install -U ezsmdeploy
 
 To install locustio for testing, do:
 
@@ -161,26 +169,38 @@ The **Deploy** class is initialized with these parameters:
 ::
 
     class Deploy(object):
-    def __init__(
-        self,
-        model,
-        script,
-        framework=None,
-        requirements=None,
-        name=None,
-        autoscale=False,
-        autoscaletarget=1000,
-        wait=True,
-        bucket=None,
-        session=None,
-        image=None,
-        dockerfilepath=None,
-        instance_type=None,
-        instance_count=1,
-        budget=100,
-        ei=None,
-        monitor=False,
-    ):
+        def __init__(
+            self,
+            model,
+            script=None,
+            framework=None,
+            requirements=None,
+            name=None,
+            autoscale=False,
+            autoscaletarget=1000,
+            serverless=False,
+            serverless_memory=4096,
+            serverless_concurrency=10,
+            wait=True,
+            bucket=None,
+            prefix="",
+            volume_size=None,
+            session=None,
+            image=None,
+            dockerfilepath=None,
+            dockerextras=[],
+            instance_type=None,
+            instance_count=1,
+            budget=100,
+            ei=None,
+            monitor=False,
+            asynchronous=False,
+            foundation_model=False,
+            foundation_model_version="*",
+            huggingface_model=False,
+            huggingface_model_task=None,
+            huggingface_model_quantize=None,
+        ):
 
 
 Let's take a look at each of these parameters and what they do:
@@ -238,6 +258,42 @@ Let's take a look at each of these parameters and what they do:
 * Set **"monitor"** to True if you would like to turn on Datacapture for this endpoint. Currently, a sampling_percentage of 100 is used. Read more about Model monitor here - https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html
 
 |
+
+* Set **"asynchronous"** to True if you would like to turn this into an async endpoint. Read more about Model monitor here - https://docs.aws.amazon.com/sagemaker/latest/dg/async-inference.html
+
+|
+
+You can now deploy state-of-the-art models like GPT-3, Falcon, and Bloom directly from Hugging Face or Jumpstart to SageMaker, without having to build custom containers or write complex deployment code.
+For example, to deploy the 40B parameter Falcon instruct model from Hugging Face, here is the code:
+
+::
+
+    ez_falcon = Deploy(model="tiiuae/falcon-40b-instruct",
+                 foundation_model=True,
+                 huggingface_model=True)
+                 
+
+|
+
+You can combine multiple flags, for example, to deploy a Huggingface FM on a serverless instance easily by just enabling the serverless flag:
+
+::
+
+    ez_tinybert = ezsmdeploy.Deploy(model = "Intel/dynamic_tinybert",
+                                huggingface_model=True,
+                                huggingface_model_task='question-answering',
+                                serverless=True, 
+                                serverless_memory=6144
+                                )
+
+     payload  = {"inputs": {
+         "question": "Who discovered silk?",
+         "context": "Legend has it that the process for making silk cloth was first invented by the wife of the Yellow Emperor, Leizu, around the year 2696 BC. The idea for silk first came to Leizu while she was having tea in the imperial gardens." + "The production of silk originates in China in the Neolithic (Yangshao culture, 4th millennium BCE). Silk remained confined to China until the Silk Road opened at some point during the later half of the first millennium BCE. "
+     }}
+
+     response = ez_tinybert.predictor.predict(payload)
+
+
 
 * You should see an output as follows for a typical deployment:
     
