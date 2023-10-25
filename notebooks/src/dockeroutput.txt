@@ -1,0 +1,6 @@
+Building container ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
+Building 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
+Creating repo for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz if it doesn't already exist
+Getting login for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
+Login Succeeded
+Building locally
