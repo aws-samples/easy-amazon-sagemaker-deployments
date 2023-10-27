@@ -1,6 +1,48 @@
-Building container ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
-Building 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
-Creating repo for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz if it doesn't already exist
-Getting login for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-qftehao3axhgyt2hjwdhtz
+Building container ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc
+Building 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc
+Creating repo for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc if it doesn't already exist
+Getting login for 716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc
 Login Succeeded
 Building locally
+sha256:80717bdfe7e3da861ef2e763c15ce7d350b02a08586081c95b96e8e184d1351d
+Pushing
+Using default tag: latest
+The push refers to repository [716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc]
+dcd28ecb8717: Preparing
+9e0352bd2d1d: Preparing
+d53e74f925f5: Preparing
+e539c00af04f: Preparing
+6d9be24e5ffa: Preparing
+67bcbcddc85f: Preparing
+644de211b4ec: Preparing
+a425c2294cca: Preparing
+485683ee4548: Preparing
+aed7349ce8d6: Preparing
+f0655e35a833: Preparing
+23263e7fbae1: Preparing
+f6ff87f107a2: Preparing
+256d88da4185: Preparing
+485683ee4548: Waiting
+f0655e35a833: Waiting
+aed7349ce8d6: Waiting
+f6ff87f107a2: Waiting
+256d88da4185: Waiting
+67bcbcddc85f: Waiting
+a425c2294cca: Waiting
+dcd28ecb8717: Pushed
+6d9be24e5ffa: Pushed
+e539c00af04f: Pushed
+a425c2294cca: Pushed
+67bcbcddc85f: Pushed
+aed7349ce8d6: Pushed
+f0655e35a833: Pushed
+d53e74f925f5: Pushed
+485683ee4548: Pushed
+9e0352bd2d1d: Pushed
+23263e7fbae1: Pushed
+256d88da4185: Pushed
+f6ff87f107a2: Pushed
+644de211b4ec: Pushed
+latest: digest: sha256:b14029286faeca04f7cd9ad5f906a732cd33162faf803d4123a9d8ca036c8b7f size: 3266
+716845917484.dkr.ecr.us-east-1.amazonaws.com/ezsmdeploy-image-fbjbgkkes2sdk3d8hnn3hc
+SUCCESS

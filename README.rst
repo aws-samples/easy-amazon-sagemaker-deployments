@@ -59,6 +59,8 @@ V 2.x release notes
 5. Added async inference support through 
 6. Added predict and delete_endpoint functions as aliases to the returned object from Deploy so it is easier to do predictions once deployed
 7. Added new notebooks for all of the above examples
+8. Added support for DJL serving. Now all HF models that do not use the LMI container use DJL. Underlying serving stack (deepspeed / fastertransformer/ HF accelerate) are automatically selected
+9. Added support to add arbitrary docker lines to the container used. In addition to reqiurements.txt, this will help make the tool even more flexible.
 
 
 V 1.x release notes

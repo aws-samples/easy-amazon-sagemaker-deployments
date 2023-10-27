@@ -14,6 +14,7 @@ import pkg_resources
 import subprocess
 from sagemaker.multidatamodel import MultiDataModel
 from sagemaker.serverless import ServerlessInferenceConfig
+from sagemaker.djl_inference.model import DJLModel
 from sagemaker.model import Model
 import ast
 import csv
@@ -307,6 +308,7 @@ class Deploy(object):
         self.deploy()
 
     def deploy_huggingface_model(self):
+        
         if self.instance_type == None and not self.serverless:
             raise ValueError("Please enter a valid instance type, not [None]")
 
@@ -319,6 +321,8 @@ class Deploy(object):
         self.model = self.model[0]
         hub = {
             "HF_MODEL_ID": self.model,  # model_id from hf.co/models
+            "HF_MODEL_TRUST_REMOTE_CODE": json.dumps(True),
+            "HF_TRUST_REMOTE_CODE": "True"
         }
 
         if self.huggingface_model_task is not None:
@@ -388,7 +392,7 @@ class Deploy(object):
             not self.serverless and self.foundation_model and self.huggingface_model
         ):  # Basically just for large models
             self.sagemakermodel = HuggingFaceModel(
-                image_uri=get_huggingface_llm_image_uri("huggingface"),
+                image_uri=get_huggingface_llm_image_uri("huggingface", version= "1.1.0"),
                 env=hub,  # configuration for loading model from Hub
                 role=aws_role,  # IAM role with permissions to create an endpoint
                 name=endpoint_name,
@@ -397,13 +401,20 @@ class Deploy(object):
                 py_version="py39",  # Python version used
             )
         else:
-            self.sagemakermodel = HuggingFaceModel(
-                env=hub,  # configuration for loading model from Hub
-                role=aws_role,  # iam role with permissions to create an Endpoint
-                transformers_version="4.26",  # transformers version used
-                pytorch_version="1.13",  # pytorch version used
-                py_version="py39",  # python version used
-            )
+            if self.serverless:
+                self.sagemakermodel_serverless = HuggingFaceModel(
+                    env=hub,  # configuration for loading model from Hub
+                    role=aws_role,  # iam role with permissions to create an Endpoint
+                    transformers_version="4.26",  # transformers version used
+                    pytorch_version="1.13",  # pytorch version used
+                    py_version="py39",  # python version used
+                )
+            else:
+                self.sagemakermodel = DJLModel(
+                    self.model,
+                    aws_role,
+                    dtype="fp16",
+                    number_of_partitions=int(hub["SM_NUM_GPUS"]) )
 
     def deploy_foundation_model(self):
         # Assume foundation model on Jumpstart here
@@ -683,18 +694,29 @@ class Deploy(object):
                 endpoint_name="ezsm-hf-endpoint-" + self.name,
                 volume_size=volume_size,
                 wait=self.wait,
-                container_startup_health_check_timeout=300,
+                container_startup_health_check_timeout=1200,
             )
 
         elif self.huggingface_model and not self.foundation_model:
-            self.predictor = self.sagemakermodel.deploy(
-                initial_instance_count=self.instance_count,
-                instance_type=self.instance_type,
-                endpoint_name="ezsm-hf-endpoint-" + self.name,
-                volume_size=volume_size,
-                serverless_inference_config=self.serverless_config,
-                wait=self.wait,
-            )
+            if self.serverless:
+                self.predictor = self.sagemakermodel_serverless.deploy(
+                    initial_instance_count=self.instance_count,
+                    instance_type=self.instance_type,
+                    endpoint_name="ezsm-serv-hf-endpoint-" + self.name,
+                    volume_size=volume_size,
+                    serverless_inference_config=self.serverless_config,
+                    wait=self.wait,
+                )
+            else:
+                self.predictor = self.sagemakermodel.deploy(
+                    initial_instance_count=self.instance_count,
+                    instance_type=self.instance_type,
+                    endpoint_name="ezsm-djl-hf-endpoint-" + self.name,
+                    volume_size=volume_size,
+                    wait=self.wait
+                )
+                
+                
 
         else:
             
@@ -707,7 +729,7 @@ class Deploy(object):
                 volume_size=volume_size,
                 data_capture_config=data_capture_config,
                 serverless_inference_config=self.serverless_config,
-                container_startup_health_check_timeout=300,
+                container_startup_health_check_timeout=1200,
                 async_inference_config=self.async_config
             )
 
