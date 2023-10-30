@@ -1,5 +1,12 @@
 
 import os
+os.environ['CUDA_HOME']='/usr/local/lib/python3.10/dist-packages/torch/cuda/'
+
+os.system('git clone https://github.com/IDEA-Research/GroundingDINO.git')
+os.system('wget -q https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth')
+
+print("Downloaded weights")
+
 import torch
 print("imported torch successfully")
 # os.system('pip install -U git+https://github.com/luca-medeiros/lang-segment-anything.git')
@@ -12,6 +19,9 @@ from groundingdino.util import box_ops
 from groundingdino.util.inference import predict as predictd
 from groundingdino.util.slconfig import SLConfig
 from groundingdino.util.utils import clean_state_dict
+from groundingdino.util.inference import load_model as load_modeld
+from groundingdino.util.inference import load_image, annotate
+
 from huggingface_hub import hf_hub_download
 from segment_anything import sam_model_registry
 from segment_anything import SamPredictor
@@ -57,7 +67,7 @@ def transform_image(image) -> torch.Tensor:
 
 class LangSAM():
 
-    def __init__(self, sam_type="vit_l", ckpt_path=None):
+    def __init__(self, sam_type="vit_h", ckpt_path=None):
         self.sam_type = sam_type
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.build_groundingdino()
@@ -67,7 +77,7 @@ class LangSAM():
         if self.sam_type is None or ckpt_path is None:
             if self.sam_type is None:
                 print("No sam type indicated. Using vit_h by default.")
-                self.sam_type = "vit_l"
+                self.sam_type = "vit_h"
             checkpoint_url = SAM_MODELS[self.sam_type]
             try:
                 sam = sam_model_registry[self.sam_type]()
@@ -93,7 +103,11 @@ class LangSAM():
         ckpt_repo_id = "ShilongLiu/GroundingDINO"
         ckpt_filename = "groundingdino_swinb_cogcoor.pth"
         ckpt_config_filename = "GroundingDINO_SwinB.cfg.py"
-        self.groundingdino = load_model_hf(ckpt_repo_id, ckpt_filename, ckpt_config_filename)
+        # self.groundingdino = load_model_hf(ckpt_repo_id, ckpt_filename, ckpt_config_filename)
+        
+        self.groundingdino = load_modeld("./GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py", "groundingdino_swint_ogc.pth")
+
+        
         print("Loaded dino and other imports successfully")
 
     def predict_dino(self, image_pil, text_prompt, box_threshold, text_threshold):

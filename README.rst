@@ -184,6 +184,7 @@ The **Deploy** class is initialized with these parameters:
             serverless_memory=4096,
             serverless_concurrency=10,
             wait=True,
+            wait_time=300,
             bucket=None,
             prefix="",
             volume_size=None,
