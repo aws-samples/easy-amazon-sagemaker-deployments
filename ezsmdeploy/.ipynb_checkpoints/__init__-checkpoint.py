@@ -70,6 +70,7 @@ class Deploy(object):
         serverless_memory=4096,
         serverless_concurrency=10,
         wait=True,
+        wait_time=300,
         bucket=None,
         prefix="",
         volume_size=None,
@@ -104,6 +105,7 @@ class Deploy(object):
         }
 
         self.wait = wait
+        self.wait_time=wait_time
         self.budget = budget
         self.instance_count = instance_count
         self.instance_type = instance_type
@@ -694,7 +696,7 @@ class Deploy(object):
                 endpoint_name="ezsm-hf-endpoint-" + self.name,
                 volume_size=volume_size,
                 wait=self.wait,
-                container_startup_health_check_timeout=1200,
+                container_startup_health_check_timeout=self.wait_time,
             )
 
         elif self.huggingface_model and not self.foundation_model:

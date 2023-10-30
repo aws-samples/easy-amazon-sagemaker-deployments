@@ -70,6 +70,7 @@ class Deploy(object):
         serverless_memory=4096,
         serverless_concurrency=10,
         wait=True,
+        wait_time=300,
         bucket=None,
         prefix="",
         volume_size=None,
@@ -104,6 +105,7 @@ class Deploy(object):
         }
 
         self.wait = wait
+        self.wait_time = wait_time
         self.budget = budget
         self.instance_count = instance_count
         self.instance_type = instance_type
@@ -290,25 +292,26 @@ class Deploy(object):
             )
 
         self.autoscale = autoscale
-        
+
         # ------- Async checks -----------
         self.async_config = None
         if self.asynchronous:
-            from sagemaker.async_inference.async_inference_config import AsyncInferenceConfig
+            from sagemaker.async_inference.async_inference_config import (
+                AsyncInferenceConfig,
+            )
 
             self.async_config = AsyncInferenceConfig(
-            output_path=f"s3://{self.bucket}/asynchronous/output",
-            max_concurrent_invocations_per_instance=4)
-            
+                output_path=f"s3://{self.bucket}/asynchronous/output",
+                max_concurrent_invocations_per_instance=4,
+            )
+
             # Plan to autoscale to zero when async config is turned on
-            self.autoscale=True
-            
+            self.autoscale = True
 
         self.wait = wait
         self.deploy()
 
     def deploy_huggingface_model(self):
-        
         if self.instance_type == None and not self.serverless:
             raise ValueError("Please enter a valid instance type, not [None]")
 
@@ -322,7 +325,7 @@ class Deploy(object):
         hub = {
             "HF_MODEL_ID": self.model,  # model_id from hf.co/models
             "HF_MODEL_TRUST_REMOTE_CODE": json.dumps(True),
-            "HF_TRUST_REMOTE_CODE": "True"
+            "HF_TRUST_REMOTE_CODE": "True",
         }
 
         if self.huggingface_model_task is not None:
@@ -392,7 +395,7 @@ class Deploy(object):
             not self.serverless and self.foundation_model and self.huggingface_model
         ):  # Basically just for large models
             self.sagemakermodel = HuggingFaceModel(
-                image_uri=get_huggingface_llm_image_uri("huggingface", version= "1.1.0"),
+                image_uri=get_huggingface_llm_image_uri("huggingface", version="1.1.0"),
                 env=hub,  # configuration for loading model from Hub
                 role=aws_role,  # IAM role with permissions to create an endpoint
                 name=endpoint_name,
@@ -414,7 +417,8 @@ class Deploy(object):
                     self.model,
                     aws_role,
                     dtype="fp16",
-                    number_of_partitions=int(hub["SM_NUM_GPUS"]) )
+                    number_of_partitions=int(hub["SM_NUM_GPUS"]),
+                )
 
     def deploy_foundation_model(self):
         # Assume foundation model on Jumpstart here
@@ -694,7 +698,7 @@ class Deploy(object):
                 endpoint_name="ezsm-hf-endpoint-" + self.name,
                 volume_size=volume_size,
                 wait=self.wait,
-                container_startup_health_check_timeout=1200,
+                container_startup_health_check_timeout=self.wait_time,
             )
 
         elif self.huggingface_model and not self.foundation_model:
@@ -713,13 +717,10 @@ class Deploy(object):
                     instance_type=self.instance_type,
                     endpoint_name="ezsm-djl-hf-endpoint-" + self.name,
                     volume_size=volume_size,
-                    wait=self.wait
+                    wait=self.wait,
                 )
-                
-                
 
         else:
-            
             self.predictor = self.sagemakermodel.deploy(
                 initial_instance_count=self.instance_count,
                 instance_type=self.instance_type,
@@ -730,7 +731,7 @@ class Deploy(object):
                 data_capture_config=data_capture_config,
                 serverless_inference_config=self.serverless_config,
                 container_startup_health_check_timeout=1200,
-                async_inference_config=self.async_config
+                async_inference_config=self.async_config,
             )
 
         self.endpoint_name = self.predictor.endpoint_name
@@ -881,13 +882,12 @@ class Deploy(object):
         in2 = response["ProductionVariants"][0]["VariantName"]
 
         client = boto3.client("application-autoscaling")
-        
-        
+
         if self.asynchronous:
             minc = 0
         else:
             minc = 1
-            
+
         response = client.register_scalable_target(
             ServiceNamespace="sagemaker",
             ResourceId="endpoint/{}/variant/{}".format(in1, in2),
@@ -1215,7 +1215,7 @@ class Deploy(object):
                 self.predict = self.predictor.predict_async
             else:
                 self.predict = self.predictor.predict
-            
+
             self.delete_endpoint = self.predictor.delete_endpoint
 
             return self.predictor
