@@ -6,10 +6,10 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 RUN apt -y update && apt -y upgrade && \
-    apt-get -y install curl && \
-    curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt install nodejs -y && \
-    npm install -g @bazel/bazelisk
+apt-get -y install curl && apt-get -y install wget && \
+wget https://deb.nodesource.com/setup_18.x | bash - && \
+apt install nodejs -y && apt install npm -y && \
+npm install -g @bazel/bazelisk
     
 # Install necessary dependencies for MMS and SageMaker Inference Toolkit
 

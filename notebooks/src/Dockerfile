@@ -5,9 +5,9 @@
 FROM ubuntu:22.04
 
 RUN apt -y update && apt -y upgrade && \
-apt-get -y install curl && \
-curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-apt install nodejs -y && \
+apt-get -y install curl && apt-get -y install wget && \
+wget https://deb.nodesource.com/setup_18.x | bash - && \
+apt install nodejs -y && apt install npm -y && \
 npm install -g @bazel/bazelisk
 
 RUN apt-get update && \
@@ -64,9 +64,5 @@ RUN chmod +x /opt/program/train
 
 RUN chmod +x /opt/program/serve
 
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-RUN git clone https://github.com/IDEA-Research/GroundingDINO.git && cd GroundingDINO/ && pip3 install -e . 
-RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
-RUN pip install -U git+https://github.com/luca-medeiros/lang-segment-anything.git
-RUN python3 -c "from groundingdino.models import build_model"
+RUN pip3 install -U git+https://github.com/luca-medeiros/lang-segment-anything.git
 WORKDIR /opt/program
