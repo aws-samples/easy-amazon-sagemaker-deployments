@@ -177,6 +177,7 @@ The **Deploy** class is initialized with these parameters:
             script=None,
             framework=None,
             requirements=None,
+            dependencies=None,
             name=None,
             autoscale=False,
             autoscaletarget=1000,

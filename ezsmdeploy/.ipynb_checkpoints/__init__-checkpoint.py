@@ -63,6 +63,7 @@ class Deploy(object):
         script=None,
         framework=None,
         requirements=None,
+        dependencies=None,
         name=None,
         autoscale=False,
         autoscaletarget=1000,
@@ -110,6 +111,7 @@ class Deploy(object):
         self.instance_count = instance_count
         self.instance_type = instance_type
         self.image = image
+        self.dependencies=dependencies
         self.dockerfilepath = dockerfilepath
         self.dockerextras = dockerextras
         self.ei = ei
@@ -145,7 +147,6 @@ class Deploy(object):
                 self.costdict[rows[0]] = float(rows[1])
 
         # ------- basic instance type check --------
-
         if (
             self.instance_type == None
         ):  # since we will not select a a GPU instance in automatic instance selection
@@ -238,7 +239,7 @@ class Deploy(object):
                     returns a loaded model, and predict(inputdata) function that returns a prediction in your"
                     + script
                 )
-
+        assert type(self.dependencies)==list, "Please enter dependencies as a list of folder paths to include"
         # ------- session checks --------
         if session == None:
             self.session = sagemaker.session.Session()
@@ -620,6 +621,7 @@ class Deploy(object):
                 model_data=self.modelpath[0],
                 image_uri=self.image,
                 role=sagemaker.get_execution_role(),
+                dependencies=self.dependencies,
                 # sagemaker_session=self.session,
                 predictor_cls=sagemaker.predictor.Predictor,
             )
@@ -630,6 +632,7 @@ class Deploy(object):
                 model_data_prefix="/".join(self.modelpath[0].split("/")[:-1]) + "/",
                 image_uri=self.image,
                 role=sagemaker.get_execution_role(),
+                dependencies=self.dependencies,
                 # sagemaker_session=self.session,
                 predictor_cls=sagemaker.predictor.Predictor,
             )
@@ -1037,6 +1040,13 @@ class Deploy(object):
                 sp.hide()
                 sp.write(str(datetime.datetime.now() - start) + " | added source file")
                 sp.show()
+                
+                if len(self.dependencies)>1:
+                    for dep in self.dependencies:
+                        shutil.copytree(dep, "src/")
+                    sp.hide()
+                    sp.write(str(datetime.datetime.now() - start) + " | added dependencies")
+                    sp.show()
 
                 # ------ Dockerfile checks -------
                 if self.dockerfilepath == None and self.multimodel == True:
