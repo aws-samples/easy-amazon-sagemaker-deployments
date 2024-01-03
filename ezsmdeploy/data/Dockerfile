@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Set a docker label to advertise multi-model support on the container
 LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
@@ -6,19 +6,20 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 RUN apt -y update && apt -y upgrade && \
-    apt-get -y install curl && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt install nodejs -y && \
-    npm install -g @bazel/bazelisk
+apt-get -y install curl && apt-get -y install wget && \
+wget https://deb.nodesource.com/setup_18.x | bash - && \
+apt install nodejs -y && apt install npm -y && \
+npm install -g @bazel/bazelisk
     
 # Install necessary dependencies for MMS and SageMaker Inference Toolkit
 
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     build-essential \
+    git \
     ca-certificates \
     openjdk-8-jdk-headless \
-    python3-dev \
+    python3 \
     python3-pip \
     python3-setuptools \
     nginx \
@@ -28,7 +29,7 @@ RUN apt-get update && \
     vim \
     && rm -rf /var/lib/apt/lists/* 
 
-
+RUN python3 -V
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
 

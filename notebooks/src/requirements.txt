@@ -1,3 +1,2 @@
-scikit-learn==0.22.1
-numpy
-joblib
+torch==2.0.1
+torchvision==0.15.2

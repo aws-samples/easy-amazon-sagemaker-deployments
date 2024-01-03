@@ -1,35 +1,39 @@
-import sklearn
-from joblib import load
-import numpy as np
-import os
 
-#Return loaded model
+import os
+import json
+import base64
+from PIL import Image
+from lang_sam import LangSAM
+import torch
+torch.cuda.empty_cache() 
+
+import os
+# os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb=16'
+
 def load_model(modelpath):
-    print(modelpath)
-    
-    # Either load individually
-    print("loading individuals")
-    logistic = load(os.path.join(modelpath,'logistic.joblib'))
-    cart = load(os.path.join(modelpath,'cart.joblib'))
-    svm = load(os.path.join(modelpath,'svm.joblib'))
-    
-    # Or load the entire ensemble
-    print("loading ensemble")
-    ensemble = load(os.path.join(modelpath,'ensemble.joblib'))
-    print("loaded")
-    return ensemble
+    model = LangSAM()
+    print("Loaded LangSAM successfully")
+
+    return model
 
 # return prediction based on loaded model (from the step above) and an input payload
 def predict(model, payload):
-    try:
-        # locally, payload may come in as an np.ndarray
-        if type(payload)==np.ndarray:
-            out = [str(model.predict(payload.reshape((1,8))))]
-        # in remote / container based deployment, payload comes in as a stream of bytes
-        else:
-
-            out = [str(model.predict(np.frombuffer(payload).reshape((1,8))))]
-    except Exception as e:
-        out = [type(payload),str(e)] #useful for debugging!
     
-    return out
+    
+    # json_payload = '{"size": [100, 100], "image_bytes": "BASE64_ENCODED_IMAGE_DATA", "text_prompt": "wheel"}'
+
+    # Parse the JSON payload
+    payload = json.loads(payload)
+
+    # Decode the Base64 image data back into bytes
+    image_bytes_base64 = payload['image_bytes']
+    image_bytes = base64.b64decode(image_bytes_base64)
+    
+    size = payload['size']
+    text_prompt = payload['text_prompt']
+    
+    image_pil = Image.frombytes("RGB",size = size, data = image_bytes) 
+    
+    masks, boxes, phrases, logits = model.predict(image_pil, text_prompt)
+    
+    return json.dumps({'boxes':boxes.tolist()})

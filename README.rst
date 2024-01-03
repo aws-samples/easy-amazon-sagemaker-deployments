@@ -17,17 +17,51 @@ Ezsmdeploy - SageMaker custom deployments made easy
 .. image:: https://img.shields.io/badge/Made%20With-Love-orange.svg
    :target: https://pypi.python.org/pypi/ezsmdeploy
    :alt: Made With Love
+
+.. image:: https://img.shields.io/badge/Gen-AI-8A2BE2
+   :target: https://pypi.python.org/pypi/ezsmdeploy
+   :alt: GenAI
+   
    
 
-**Ezsmdeploy** python SDK helps you easily deploy Machine learning models and provides a rich set of features such as passing one or more model files (yes, through multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on simplifying deployment from existing models, and as such, this is for you if:
+**Ezsmdeploy** python SDK helps you easily deploy Machine learning models on SageMaker. It provides a rich set of features such as deploying models from hubs (like Huggingface or SageMaker Jumpstart), passing one or more model files (even with multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on further simplifying deployment from existing models, and as such, this is for you if:
 
-1. you have a serialized model (a pickle / joblib/ json/ TF saved model/ Pytorch .pth/ etc) file and you want to deploy and test your model as an API endpoint
-2. you have a model or multiple models stored as local files, in local folders, or in S3 as tar files (model.tar.gz)
-3. you don't want to create a custom docker container for deployment and/or don't want to deal with docker
-4. you want to make use of advanced features such as autoscaling, elastic inference, multi-model endpoints, model inference data capture, and locust.io based load testing, without any of the heavy lifting
-5. you want to still have control of how do perform inference by passing in a python script
+1.  you want to quickly deploy and try out foundational language models as an API powered by SageMaker (**New in v 2.0**)
+2.  you have a serialized model (a pickle / joblib/ json/ TF saved model/ Pytorch .pth/ etc) file and you want to deploy and test your model as an API endpoint
+3. you have a model or multiple models stored as local files, in local folders, or in S3 as tar files (model.tar.gz)
+4. you don't want to create a custom docker container for deployment and/or don't want to deal with docker
+5. you want to make use of advanced features such as autoscaling, elastic inference, multi-model endpoints, model inference data capture, and locust.io based load testing, without any of the heavy lifting
+6. you want to still have control of how do perform inference by passing in a python script
 
 Note for some Sagemaker estimators, deployment from pretrained models is easy; consider the Tensorflow savedmodel format. You can very easily tar your save_model.pb and variables file and use the sagemaker.tensorflow.serving.Model to register and deploy your model. Nevertheless, if your TF model is saved as checkpoints, HDF5 file, or as Tflite file, or if you have deployments needs accross multiple types of serialized model files, this may help standardize your deployment pipeline and avoid the need for building new containers for each model.
+
+
+
+V 2.x release notes
+-------------------
+1. Added support for SageMaker Jumpstart foundational models
+2. Added support for Huggingface hub models
+3. Added OpenChatKit support for appropriate chat models
+4. Tested the following:
+    - tiiuae/falcon-40b-instruct, ml.g4dn.12xlarge
+    - tiiuae/falcon-7b-instruct, ml.g5.16xlarge
+    - WizardLM/WizardLM-7B-V1.0", ml.g5.16xlarge
+    - TheBloke/wizardLM-7B-HF, ml.g4dn.4xlarge
+    - TheBloke/dromedary-65b-lora-HF, ml.g4dn.4xlarge
+    - togethercomputer/RedPajama-INCITE-Chat-3B-v1, ml.g4dn.4xlarge
+    - openchat/openchat, ml.g5.24xlarge
+    - facebook/galactica-6.7b, ml.g5.16xlarge
+    - CalderaAI/30B-Lazarus, ml.g5.16xlarge
+    - huggyllama/llama-65b, ml.g5.16xlarge
+    - ausboss/llama-30b-supercot, ml.g4dn.4xlarge
+    - MetaIX/GPT4-X-Alpasta-30b, ml.g4dn.4xlarge
+    - Also tried several small/tiny models from huggingface on Serverless - (distilbert / dynamic-tinybert / deepset/tinyroberta-squad2 / facebook/detr-resnet-50) 
+5. Added async inference support through 
+6. Added predict and delete_endpoint functions as aliases to the returned object from Deploy so it is easier to do predictions once deployed
+7. Added new notebooks for all of the above examples
+8. Added support for DJL serving. Now all HF models that do not use the LMI container use DJL. Underlying serving stack (deepspeed / fastertransformer/ HF accelerate) are automatically selected
+9. Added support to add arbitrary docker lines to the container used. In addition to reqiurements.txt, this will help make the tool even more flexible.
+
 
 V 1.x release notes
 -------------------
@@ -54,6 +88,12 @@ The Ezsmdeploy Python SDK is built to PyPI and has the following dependencies sa
 ::
 
     pip install ezsmdeploy
+    
+Make sure you upgrade to the latest stable version of ezsmdeploy if you have been using this library in the past:
+
+::
+
+    pip install -U ezsmdeploy
 
 To install locustio for testing, do:
 
@@ -131,26 +171,40 @@ The **Deploy** class is initialized with these parameters:
 ::
 
     class Deploy(object):
-    def __init__(
-        self,
-        model,
-        script,
-        framework=None,
-        requirements=None,
-        name=None,
-        autoscale=False,
-        autoscaletarget=1000,
-        wait=True,
-        bucket=None,
-        session=None,
-        image=None,
-        dockerfilepath=None,
-        instance_type=None,
-        instance_count=1,
-        budget=100,
-        ei=None,
-        monitor=False,
-    ):
+        def __init__(
+            self,
+            model,
+            script=None,
+            framework=None,
+            requirements=None,
+            dependencies=None,
+            name=None,
+            autoscale=False,
+            autoscaletarget=1000,
+            serverless=False,
+            serverless_memory=4096,
+            serverless_concurrency=10,
+            wait=True,
+            wait_time=300,
+            bucket=None,
+            prefix="",
+            volume_size=None,
+            session=None,
+            image=None,
+            dockerfilepath=None,
+            dockerextras=[],
+            instance_type=None,
+            instance_count=1,
+            budget=100,
+            ei=None,
+            monitor=False,
+            asynchronous=False,
+            foundation_model=False,
+            foundation_model_version="*",
+            huggingface_model=False,
+            huggingface_model_task=None,
+            huggingface_model_quantize=None,
+        ):
 
 
 Let's take a look at each of these parameters and what they do:
@@ -209,6 +263,42 @@ Let's take a look at each of these parameters and what they do:
 
 |
 
+* Set **"asynchronous"** to True if you would like to turn this into an async endpoint. Read more about Model monitor here - https://docs.aws.amazon.com/sagemaker/latest/dg/async-inference.html
+
+|
+
+You can now deploy state-of-the-art models like GPT-3, Falcon, and Bloom directly from Hugging Face or Jumpstart to SageMaker, without having to build custom containers or write complex deployment code.
+For example, to deploy the 40B parameter Falcon instruct model from Hugging Face, here is the code:
+
+::
+
+    ez_falcon = Deploy(model="tiiuae/falcon-40b-instruct",
+                 foundation_model=True,
+                 huggingface_model=True)
+                 
+
+|
+
+You can combine multiple flags, for example, to deploy a Huggingface FM on a serverless instance easily by just enabling the serverless flag:
+
+::
+
+    ez_tinybert = ezsmdeploy.Deploy(model = "Intel/dynamic_tinybert",
+                                huggingface_model=True,
+                                huggingface_model_task='question-answering',
+                                serverless=True, 
+                                serverless_memory=6144
+                                )
+
+     payload  = {"inputs": {
+         "question": "Who discovered silk?",
+         "context": "Legend has it that the process for making silk cloth was first invented by the wife of the Yellow Emperor, Leizu, around the year 2696 BC. The idea for silk first came to Leizu while she was having tea in the imperial gardens." + "The production of silk originates in China in the Neolithic (Yangshao culture, 4th millennium BCE). Silk remained confined to China until the Silk Road opened at some point during the later half of the first millennium BCE. "
+     }}
+
+     response = ez_tinybert.predictor.predict(payload)
+
+
+
 * You should see an output as follows for a typical deployment:
     
  ::
@@ -264,6 +354,72 @@ Make sure your model script has a load_model() and predict() function. While you
 
 
 Note that when using the Multi model mode, the payload comes in as a dictionary and the raw bytes sent in can be accessed using payload[0]['body']; In flask based deployments, you can just use payload as it is (comes in as bytes)
+
+
+Large Language models
+~~~~~~~~~~~~~~~~~~~~~
+
+EzSMDeploy supports deploying foundation models through Jumpstart as well as huggingface. Genreral guidance:
+
+
+1. Jumpstart models - `foundation_model=True`
+2. Large huggingface models - `foundation_model=True, huggingface_model=True`
+3. Small huggingface models - `huggingface_model=True`
+4. Tiny models - `serverless=True`
+
+
+To deploy models using Jumpstart:
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "huggingface-text2text-flan-ul2-bf16",
+                               foundation_model=True)
+                               
+Note that with Jumpstart models, we can automatically retrieve default/suggested instances from SageMaker                               
+
+
+
+To deploy a huggingface LLM model (this uses the huggingface llm container):
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "tiiuae/falcon-40b-instruct",
+                               foundation_model=True,
+                               huggingface_model=True,
+                               huggingface_model_task='text-generation',
+                               instance_type="ml.g4dn.12xlarge"
+                               )
+                               
+(See release notes for models we have tested so far with instances that worked)
+
+Note that at the time of writing this, officially supported model architectures for LLMs on Huggingface are currently:
+
+    - BLOOM / BLOOMZ
+    - MT0-XXL
+    - Galactica
+    - SantaCoder
+    - GPT-Neox 20B (joi, pythia, lotus, rosey, chip, RedPajama, open assistant)
+    - FLAN-T5-XXL (T5-11B)
+    - Llama (vicuna, alpaca, koala)
+    - Starcoder / SantaCoder
+    - Falcon 7B / Falcon 40B
+
+
+
+
+
+Serverless inference
+~~~~~~~~~~~~~~~~~~~~
+
+Simply do `serverless=True`. Make sure you size your serverless endpoint correctly using `serverless_memory` and `serverless_concurrency`. You can combine other features as well, for example, to deploy a huggingface model on serverless use:
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "distilbert-base-uncased-finetuned-sst-2-english",
+                               huggingface_model=True,
+                               huggingface_model_task='text-classification',
+                               serverless=True
+                               )
 
 
 Supported Operating Systems

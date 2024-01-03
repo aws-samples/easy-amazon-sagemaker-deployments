@@ -2,34 +2,46 @@
 # This is a Python 3 image that uses the nginx, gunicorn, flask stack
 # for serving inferences in a stable way.
 
-FROM ubuntu:18.04
+FROM ubuntu:22.04
+
+RUN apt -y update && apt -y upgrade && \
+apt-get -y install curl && apt-get -y install wget && \
+wget https://deb.nodesource.com/setup_18.x | bash - && \
+apt install nodejs -y && apt install npm -y && \
+npm install -g @bazel/bazelisk
 
 RUN apt-get update && \
-    apt-get -y install --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    openjdk-8-jdk-headless \
-    python3-dev \
-    python3-pip \
-    python3-setuptools \
-    nginx \
-    ca-certificates \
-    curl \
-    wget \
-    vim \
-    && rm -rf /var/lib/apt/lists/* 
-    
+apt-get -y install --no-install-recommends \
+build-essential \
+git \
+ca-certificates \
+openjdk-8-jdk-headless \
+python3 \
+python3-pip \
+python3-setuptools \
+nginx \
+ca-certificates \
+curl \
+wget \
+vim \
+gcc \
+libpq-dev \
+python3-wheel \
+&& rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install --upgrade pip
+RUN python3 -V
 # Here we get all python packages.
+RUN pip3 install wheel
 
 RUN pip3 --no-cache-dir install setuptools \
-                                numpy \
-                                pandas \
-                                flask gevent gunicorn \
-                                mxnet \
-                                multi-model-server \
-                                sagemaker-inference \
-                                retrying
+numpy \
+pandas \
+flask gevent gunicorn \
+mxnet \
+multi-model-server \
+sagemaker-inference \
+retrying
 
 COPY requirements.txt /usr/local/bin/requirements.txt
 
@@ -48,22 +60,9 @@ ADD . /opt/program/
 
 RUN ls /opt/program/
 
-# Set up the program in the image
-#COPY transformscript.py /opt/program/transformscript.py
-
-#COPY nginx.conf /opt/program/nginx.conf
-
-#COPY predictor.py /opt/program/predictor.py
-
-#COPY serve /opt/program/serve
-
-#COPY train /opt/program/train
-
-#COPY wsgi.py /opt/program/wsgi.py
-
 RUN chmod +x /opt/program/train
 
 RUN chmod +x /opt/program/serve
 
+RUN pip3 install -U git+https://github.com/luca-medeiros/lang-segment-anything.git
 WORKDIR /opt/program
-

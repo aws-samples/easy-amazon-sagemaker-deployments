@@ -1,0 +1,11 @@
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*/*ipynb_checkpoints*/*
+*/*__pycache*/*
+build/
+dist/
+sdist/
+*egginfo*/
+*egginfo*
+ezsmdeploy.egg-info/
+ezsmdeploy.egg-info

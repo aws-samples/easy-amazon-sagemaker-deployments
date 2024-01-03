@@ -59,3 +59,11 @@ ml.g4dn.4xlarge,1.879
 ml.g4dn.8xlarge,3.397
 ml.g4dn.12xlarge,6.107
 ml.g4dn.16xlarge,6.793
+ml.g5.xlarge,1.408
+ml.g5.2xlarge,1.515
+ml.g5.4xlarge,2.03
+ml.g5.8xlarge,3.06
+ml.g5.12xlarge,7.09
+ml.g5.16xlarge,5.12
+ml.g5.24xlarge,10.18
+ml.g5.48xlarge,20.36
