@@ -24,6 +24,8 @@ import time
 import cmd
 from typing import List, Optional
 from sagemaker.predictor import Predictor
+from huggingface_hub import snapshot_download
+
 
 _model_env_variable_map = {
     "huggingface-text2text-flan-t5-xxl": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
@@ -56,6 +58,147 @@ class utils(object):
         print("\n".join(text_generation_models))
 
 
+class Import(object):
+    def __init__(
+        self,
+        model,
+        wait=True,
+        wait_time=300,
+        huggingface_model=False,
+        bucket = None,
+        name = None):
+
+        self.wait = wait
+        self.wait_time = wait_time
+        self.model = model
+        self.huggingface_model = huggingface_model
+
+        self.bedrock_client = boto3.client('bedrock')
+        self.role = sagemaker.get_execution_role()
+
+        
+
+        self.session = sagemaker.session.Session()
+
+        if name == None:
+            self.name = "br-" + str(shortuuid.uuid().lower())
+        else:
+            self.name = name
+
+        os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
+
+        if bucket == None:
+            self.bucket = self.session.default_bucket()
+        else:
+            self.bucket = bucket
+
+        start = datetime.datetime.now()
+
+        with yaspin(Spinners.point, color="green", text="") as sp:
+            sp.hide()
+            
+                
+            if self.huggingface_model == True:
+                sp.write(str(datetime.datetime.now() - start) + " | Downloading from Huggingface hub ...")
+                sp.show()
+                ### Assume here that a model needs to be first downloaded to a local folder from the hub
+                snapshot_download(repo_id=self.model, local_dir=f"./extractedmodel/")
+                self.modelpath = "./extractedmodel"
+                #--------
+                sp.hide()
+                sp.write(str(datetime.datetime.now() - start) + " | Model downloaded!")
+                sp.show()
+                #--------
+    
+            
+            if "s3://" in self.model:
+                sp.hide()  
+                sp.write(str(datetime.datetime.now() - start) + " | Using provided S3 path")
+                sp.show()
+                self.modelpath = self.model
+                self.s3path = self.model
+
+            else:
+                if os.stat(self.model):
+                    self.modelpath = self.model
+                else:
+                    raise ValueError("Model path is not valid. Please enter a valid local model path, S3 path, or provide a huggingface model ID with `huggingface_model=True`")
+
+                sp.hide()  
+                sp.write(str(datetime.datetime.now() - start) + " | Uploading from local path to S3 ...")
+                sp.show()
+                self.s3path = self.session.upload_data(
+                        path=self.modelpath,
+                        bucket=self.bucket,
+                        key_prefix= self.name,
+                    )
+                sp.hide()  
+                sp.write(str(datetime.datetime.now() - start) + " | Uploaded to " + self.s3path )
+                sp.show()
+
+            #---------------
+            sp.hide()  
+            sp.write(str(datetime.datetime.now() - start) + " | Starting Bedrock Custom Model Import job!" )
+            sp.show()
+
+
+            # print(self.modelpath)
+
+            # Create the model import job
+            response = self.bedrock_client.create_model_import_job(
+                jobName=self.name,
+                importedModelName=self.name,
+                roleArn=self.role,
+                modelDataSource={
+                    's3DataSource': {
+                        's3Uri': self.s3path
+                    }
+                }
+            )
+            job_Arn = response['jobArn']
+            
+            # Check CMI job status
+            if self.wait==True:
+                while True:
+                    response = self.bedrock_client.get_model_import_job(jobIdentifier=job_Arn)
+                    status = response['status'].upper()
+                    # print(f"Status: {status}")
+                    
+                    if status in ['COMPLETED', 'FAILED']:
+                        print("-", end="!")
+                        if status == 'FAILED':
+                            raise ValueError("Model import job failed! Please recheck your model files and logs on Amazon Bedrock")
+                        break
+                        
+                    time.sleep(60)  # Check every 60 seconds
+                    print("-", end="")
+                
+                # Get the model ID
+                self.model_id = response['importedModelArn']
+                sp.hide()
+                sp.write(str(datetime.datetime.now() - start) + " | Created model with ARN " + self.model_id)
+                sp.show()
+                
+                sp.hide()
+                sp.write(str(datetime.datetime.now() - start) + " | Use this model ARN with the Bedrock runtime client to invoke the model.")
+                sp.write(str(datetime.datetime.now() - start) + " | "+ self.model_id)
+                sp.show()
+            else:
+                sp.hide()
+                sp.write(str(datetime.datetime.now() - start) + " | Please check the Amazon Bedrock console for model import updates.")
+                sp.show()
+            #---------------
+            sp.green.ok(str(datetime.datetime.now() - start) + " | " "Done! ✔")
+                    
+
+
+            
+
+        
+
+        
+
+
 class Deploy(object):
     def __init__(
         self,
@@ -63,7 +206,7 @@ class Deploy(object):
         script=None,
         framework=None,
         requirements=None,
-        dependencies=None,
+        dependencies=[],
         name=None,
         autoscale=False,
         autoscaletarget=1000,
@@ -396,7 +539,7 @@ class Deploy(object):
             not self.serverless and self.foundation_model and self.huggingface_model
         ):  # Basically just for large models
             self.sagemakermodel = HuggingFaceModel(
-                image_uri=get_huggingface_llm_image_uri("huggingface", version="1.1.0"),
+                image_uri=get_huggingface_llm_image_uri("huggingface", version="3.0.1"),
                 env=hub,  # configuration for loading model from Hub
                 role=aws_role,  # IAM role with permissions to create an endpoint
                 name=endpoint_name,
@@ -1352,7 +1495,16 @@ class OpenChatKitShell(cmd.Cmd):
             output = response[0]["generated_text"][len(prompt) : last]
 
         else:
-            output = "I don't recognize the output from this chat model"
+            try:
+                payload = {"inputs": prompt, "parameters": {"max_new_tokens": 100}}
+
+                response = self.predictor.predict(payload)
+                last = response[0]["generated_text"].rfind(
+                    "\n<human>"
+                )  # returns -1 if the human token hasn't been found yet, which works
+                output = response[0]["generated_text"][len(prompt) : last]
+            except:
+                output = "I don't recognize the output from this chat model. Make sure the model is instructed to answer after adding a <bot>: ... tag.\n The conversation should look like a chat between <human>... and <bot>... for chat to work, for non chat models."
 
         self.conversation.push_model_response(output)
         print(self.conversation.get_last_turn())
@@ -1365,3 +1517,6 @@ class OpenChatKitShell(cmd.Cmd):
 
     def do_quit(self, arg):
         return True
+
+
+

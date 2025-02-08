@@ -24,18 +24,54 @@ Ezsmdeploy - SageMaker custom deployments made easy
    
    
 
-**Ezsmdeploy** python SDK helps you easily deploy Machine learning models on SageMaker. It provides a rich set of features such as deploying models from hubs (like Huggingface or SageMaker Jumpstart), passing one or more model files (even with multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on further simplifying deployment from existing models, and as such, this is for you if:
+**Ezsmdeploy** python SDK helps you easily deploy Machine learning models on Amazon SageMaker and Amazon Bedrock. It provides a rich set of features such as deploying models from hubs (like Huggingface or SageMaker Jumpstart), passing one or more model files (even with multi-model deployments), automatically choosing an instance based on model size or based on a budget, and load testing endpoints using an intuitive API. **Ezsmdeploy** uses the SageMaker Python SDK, which is an open source library for training and deploying machine learning models on Amazon SageMaker. This SDK however focuses on further simplifying deployment from existing models, and as such, this is for you if:
 
-1.  you want to quickly deploy and try out foundational language models as an API powered by SageMaker (**New in v 2.0**)
+1.  you want to quickly deploy and try out foundational language models as an API powered by SageMaker and Bedrock
 2.  you have a serialized model (a pickle / joblib/ json/ TF saved model/ Pytorch .pth/ etc) file and you want to deploy and test your model as an API endpoint
 3. you have a model or multiple models stored as local files, in local folders, or in S3 as tar files (model.tar.gz)
 4. you don't want to create a custom docker container for deployment and/or don't want to deal with docker
 5. you want to make use of advanced features such as autoscaling, elastic inference, multi-model endpoints, model inference data capture, and locust.io based load testing, without any of the heavy lifting
 6. you want to still have control of how do perform inference by passing in a python script
+7. You want to import a huggingface model, or an S3 model directly to Amazon Bedrock.
 
 Note for some Sagemaker estimators, deployment from pretrained models is easy; consider the Tensorflow savedmodel format. You can very easily tar your save_model.pb and variables file and use the sagemaker.tensorflow.serving.Model to register and deploy your model. Nevertheless, if your TF model is saved as checkpoints, HDF5 file, or as Tflite file, or if you have deployments needs accross multiple types of serialized model files, this may help standardize your deployment pipeline and avoid the need for building new containers for each model.
 
+Quick start
+-----------
 
+- To deploy a model to SageMaker, do:
+
+::
+
+    ezonsm = ezsmdeploy.Deploy(model = "deepseek-ai/Janus-Pro-7B",#"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+                            huggingface_model=True,
+                            foundation_model=True,
+                            instance_type='ml.g5.8xlarge')
+
+
+- To deploy a model to Bedrock, do:
+
+::
+
+    ezsmdeploy.Import(model="meta-llama/Llama-Guard-3-8B",
+                           huggingface_model=True)
+
+
+Please explore the various other options described below.
+
+V 2.1 release notes
+-------------------
+1. Added support for importing Bedrock models using Custom Model Import
+2. Added support for Huggingface hub models to be directly imported into CMI
+3. Tested import with:
+    - Llama 2, Flan T5, Mistral, Llama 3 architecture base and fine tuned models, and more recent models like:
+    - deepseek-ai/DeepSeek-R1-Distill-Llama-8B - PASS
+    - allenai/Llama-3.1-Tulu-3-8B - PASS
+    - unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF - PASS
+    - meta-llama/Llama-Guard-3-8B - PASS
+    - unsloth/DeepSeek-R1-Distill-Llama-8B-unsloth-bnb-4bit - FAIL
+    - unsloth/llama-3-8b-bnb-4bit - FAIL
+4. Tested SageMaker deploy with Deepseek distilled models
 
 V 2.x release notes
 -------------------
