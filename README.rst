@@ -43,7 +43,7 @@ Quick start
 
 ::
 
-    ezonsm = ezsmdeploy.Deploy(model = "deepseek-ai/Janus-Pro-7B",#"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    ezonsm = ezsmdeploy.Deploy(model ="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
                             huggingface_model=True,
                             foundation_model=True,
                             instance_type='ml.g5.8xlarge')
@@ -59,7 +59,7 @@ Quick start
 
 Please explore the various other options described below.
 
-V 2.1 release notes
+V 2.2 release notes
 -------------------
 1. Added support for importing Bedrock models using Custom Model Import
 2. Added support for Huggingface hub models to be directly imported into CMI
