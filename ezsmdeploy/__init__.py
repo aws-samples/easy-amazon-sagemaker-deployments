@@ -819,7 +819,7 @@ class Deploy(object):
             ):
                 volume_size = 256
 
-            if "g5" in self.instance_type:
+            if "g5" in self.instance_type or "g6" in self.instance_type:
                 volume_size = None
 
             # otherwise leave as default
