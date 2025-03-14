@@ -111,7 +111,7 @@ class Import(object):
                 #--------
     
             
-            if "s3://" in self.model:
+            elif "s3://" in self.model: #s3 model
                 sp.hide()  
                 sp.write(str(datetime.datetime.now() - start) + " | Using provided S3 path")
                 sp.show()
@@ -119,7 +119,7 @@ class Import(object):
                 self.s3path = self.model
 
             else:
-                if os.stat(self.model):
+                if os.stat(self.model): #local model
                     self.modelpath = self.model
                 else:
                     raise ValueError("Model path is not valid. Please enter a valid local model path, S3 path, or provide a huggingface model ID with `huggingface_model=True`")
