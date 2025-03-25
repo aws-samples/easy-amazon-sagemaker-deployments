@@ -1,4 +1,5 @@
 import sagemaker
+import warnings
 import shortuuid
 from yaspin import yaspin
 from yaspin.spinners import Spinners
@@ -24,10 +25,14 @@ import time
 import cmd
 from typing import List, Optional
 from sagemaker.predictor import Predictor
-from huggingface_hub import snapshot_download
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel
 
+try:
+    from huggingface_hub import snapshot_download
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import PeftModel
+except Exception as e:
+    print(e)
+    warnings.warn("Not able to import Huggingface / Transformers / Peft. Reinstall using `pip install ezsmdeploy[transfomers]`", RuntimeWarning) 
 
 _model_env_variable_map = {
     "huggingface-text2text-flan-t5-xxl": {"TS_DEFAULT_WORKERS_PER_MODEL": "1"},
