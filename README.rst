@@ -1,5 +1,5 @@
 ====================================================
-Ezsmdeploy - SageMaker custom deployments made easy
+Ezsmdeploy - Amazon SageMaker and Bedrock custom deployments made easy
 ====================================================
 
 .. image:: https://img.shields.io/pypi/v/ezsmdeploy.svg
