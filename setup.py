@@ -23,7 +23,7 @@ extras = {
 }
 
 setup(name='ezsmdeploy',
-      version='2.23.8',
+      version='2.23.9',
       description='Amazon SageMaker and Bedrock custom model deployments made easy',
       url='https://pypi.python.org/pypi/ezsmdeploy',
       #scripts=['Dockerfile','dockerd-entrypoint.py','model_handler.py','build-docker.sh'],

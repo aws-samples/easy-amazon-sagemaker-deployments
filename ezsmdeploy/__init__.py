@@ -30,9 +30,7 @@ try:
     from huggingface_hub import snapshot_download
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from peft import PeftModel
-    from huggingface_hub.utils import tqdm
 
-    tqdm.disable_progress_bars()
 except Exception as e:
     print(e)
     warnings.warn("Not able to import Huggingface / Transformers / Peft. Reinstall using `pip install ezsmdeploy[transfomers]`", RuntimeWarning) 
