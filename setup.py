@@ -15,11 +15,15 @@ def read(fname):
 extras = {
     'locust': [
         'locustio==0.14.5'
+    ],
+    'transfomers': [
+        'transformers==4.49.0',
+        'peft==0.14.0'
     ]
 }
 
 setup(name='ezsmdeploy',
-      version='2.2',
+      version='2.23.5',
       description='Amazon SageMaker and Bedrock custom model deployments made easy',
       url='https://pypi.python.org/pypi/ezsmdeploy',
       #scripts=['Dockerfile','dockerd-entrypoint.py','model_handler.py','build-docker.sh'],

@@ -25,6 +25,8 @@ import cmd
 from typing import List, Optional
 from sagemaker.predictor import Predictor
 from huggingface_hub import snapshot_download
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 
 _model_env_variable_map = {
@@ -65,18 +67,28 @@ class Import(object):
         wait=True,
         wait_time=300,
         huggingface_model=False,
+        peft_model=None,
         bucket = None,
-        name = None):
+        name = None,
+        role = None):
 
         self.wait = wait
         self.wait_time = wait_time
         self.model = model
         self.huggingface_model = huggingface_model
-
+        self.peft_model = peft_model
         self.bedrock_client = boto3.client('bedrock')
-        self.role = sagemaker.get_execution_role()
 
-        
+        if role == None:
+            self.role = sagemaker.get_execution_role()
+        else:
+            self.role = role 
+
+        try:
+            # remove previous downloads
+            shutil.rmtree("./extractedmodel")
+        except:
+            pass
 
         self.session = sagemaker.session.Session()
 
@@ -99,14 +111,39 @@ class Import(object):
             
                 
             if self.huggingface_model == True:
-                sp.write(str(datetime.datetime.now() - start) + " | Downloading from Huggingface hub ...")
-                sp.show()
-                ### Assume here that a model needs to be first downloaded to a local folder from the hub
-                snapshot_download(repo_id=self.model, local_dir=f"./extractedmodel/")
                 self.modelpath = "./extractedmodel"
-                #--------
-                sp.hide()
-                sp.write(str(datetime.datetime.now() - start) + " | Model downloaded!")
+                if self.peft_model is None:
+                    sp.write(str(datetime.datetime.now() - start) + " | Downloading from Huggingface hub ...")
+                    sp.show()
+                    ### Assume here that a model needs to be first downloaded to a local folder from the hub
+                    snapshot_download(repo_id=self.model, local_dir=f"./extractedmodel/")
+                    
+                    #--------
+                    sp.hide()
+                    sp.write(str(datetime.datetime.now() - start) + " | Model downloaded!")
+                    sp.show()
+                else:
+                    # Download, merge and upload
+
+                    model = AutoModelForCausalLM.from_pretrained(self.model, device_map="auto")
+                    tokenizer = AutoTokenizer.from_pretrained(self.model)
+   
+                    model = PeftModel.from_pretrained(model, self.peft_model)
+
+                    model = model.merge_and_unload()
+
+                    model.save_pretrained(self.modelpath)
+                    tokenizer.save_pretrained(self.modelpath)
+
+                    del model
+
+                self.s3path = self.session.upload_data(
+                        path=self.modelpath,
+                        bucket=self.bucket,
+                        key_prefix= self.name,
+                    )
+                sp.hide()  
+                sp.write(str(datetime.datetime.now() - start) + " | Uploaded to " + self.s3path )
                 sp.show()
                 #--------
     
@@ -119,7 +156,7 @@ class Import(object):
                 self.s3path = self.model
 
             else:
-                if os.stat(self.model): #local model
+                if os.stat(self.model): # check if local model
                     self.modelpath = self.model
                 else:
                     raise ValueError("Model path is not valid. Please enter a valid local model path, S3 path, or provide a huggingface model ID with `huggingface_model=True`")
