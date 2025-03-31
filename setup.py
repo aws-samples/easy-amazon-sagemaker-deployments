@@ -16,14 +16,14 @@ extras = {
     'locust': [
         'locustio==0.14.5'
     ],
-    'transfomers': [
+    'transformers': [
         'transformers==4.49.0',
         'peft==0.14.0'
     ]
 }
 
 setup(name='ezsmdeploy',
-      version='2.23.9',
+      version='2.24.0',
       description='Amazon SageMaker and Bedrock custom model deployments made easy',
       url='https://pypi.python.org/pypi/ezsmdeploy',
       #scripts=['Dockerfile','dockerd-entrypoint.py','model_handler.py','build-docker.sh'],
